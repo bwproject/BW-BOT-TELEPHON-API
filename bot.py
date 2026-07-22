@@ -130,25 +130,15 @@ logger.info(
 # ==========================
 # Telethon Client
 # ==========================
+from telethon.network.connection import ConnectionTcpFull
 
 
 client = TelegramClient(
-
     SESSION_NAME,
-
     API_ID,
-
     API_HASH,
-
-    timeout=20,
-
-    request_retries=5,
-
-    connection_retries=5
-
+    connection=ConnectionTcpFull
 )
-
-
 
 # ==========================
 # Login storage
