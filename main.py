@@ -1,21 +1,69 @@
-from fastapi import FastAPI
+import os
+import asyncio
+import uvicorn
 
-from api import router
+from dotenv import load_dotenv
 
-app = FastAPI(
-    title="Telegram API",
-    version="1.0"
+from app import app
+import bot
+
+
+load_dotenv()
+
+
+HOST = os.getenv(
+    "HOST",
+    "0.0.0.0"
 )
 
-app.include_router(router)
+PORT = int(
+    os.getenv(
+        "PORT",
+        "8000"
+    )
+)
+
+
+
+async def startup():
+
+    print("=" * 40)
+    print("Telegram API starting")
+    print(
+        f"Server: {HOST}:{PORT}"
+    )
+    print("=" * 40)
+
+
+    await bot.start_bot()
+
+
+
+async def shutdown():
+
+    await bot.stop_bot()
+
 
 
 if __name__ == "__main__":
-    import uvicorn
 
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=False
+
+    asyncio.run(
+        startup()
     )
+
+
+    try:
+
+        uvicorn.run(
+            app,
+            host=HOST,
+            port=PORT
+        )
+
+
+    finally:
+
+        asyncio.run(
+            shutdown()
+        )
