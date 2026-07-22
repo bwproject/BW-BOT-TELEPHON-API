@@ -36,6 +36,13 @@ REST API сервис для управления Telegram аккаунтом ч
 - Вступление в каналы/группы
 - Выход из каналов/групп
 
+### Прокси
+
+- Поддержка SOCKS4/SOCKS5 прокси
+- Поддержка HTTP прокси
+- Поддержка MTProto прокси
+- Настройка через переменную окружения `PROXY`
+
 ## Структура проекта
 
 ```
@@ -81,6 +88,7 @@ pip install -r requirements.txt
 API_ID=12345678
 API_HASH=your_api_hash_here
 PHONE=+70000000000
+PROXY=socks5://127.0.0.1:1080
 SESSION_NAME=sessions/account
 HOST=0.0.0.0
 PORT=8000
@@ -91,10 +99,29 @@ API_TOKEN=
 |---|---|---|
 | `API_ID` | ID приложения Telegram | -- |
 | `API_HASH` | Хеш приложения Telegram | -- |
+| `PROXY` | Прокси для подключения к Telegram | -- |
 | `SESSION_NAME` | Путь к session-файлу | `sessions/account` |
 | `HOST` | Адрес сервера | `0.0.0.0` |
 | `PORT` | Порт сервера | `8000` |
 | `API_TOKEN` | Токен для защиты API | -- |
+
+### Прокси
+
+Если Telegram заблокирован в вашей сети, настройте прокси в `.env`:
+
+```env
+# SOCKS5 без аутентификации
+PROXY=socks5://127.0.0.1:1080
+
+# SOCKS5 с логином и паролем
+PROXY=socks5://user:pass@127.0.0.1:1080
+
+# HTTP прокси
+PROXY=http://127.0.0.1:8080
+
+# MTProto прокси (через Proxy бот в Telegram)
+PROXY=mtproto-proxy://149.154.167.50:443#ee12d3253c0e43b29c23a43e1e1e487e
+```
 
 ## Запуск
 

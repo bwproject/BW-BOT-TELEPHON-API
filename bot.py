@@ -52,6 +52,9 @@ SESSION_NAME = os.getenv(
 )
 
 
+PROXY = os.getenv("PROXY", "")
+
+
 
 # ==========================
 # Logging
@@ -149,6 +152,111 @@ logger.info(
 
 
 # ==========================
+# Proxy
+# ==========================
+
+
+def parse_proxy(proxy_str):
+    if not proxy_str:
+        return None
+
+    proxy_str = proxy_str.strip()
+
+    # socks5://user:pass@host:port
+    # socks5://host:port
+    # http://host:port
+    # mtproto-proxy://host:port#secret
+
+    try:
+        from urllib.parse import urlparse
+
+        if "://" not in proxy_str:
+            return None
+
+        parsed = urlparse(proxy_str)
+        scheme = parsed.scheme.lower()
+        host = parsed.hostname
+        port = parsed.port
+
+        if not host or not port:
+            return None
+
+        username = parsed.username
+        password = parsed.password
+
+        if scheme in ("socks5", "socks4"):
+            type_ = (
+                "SOCKS5"
+                if scheme == "socks5"
+                else "SOCKS4"
+            )
+            proxy = (type_, host, port)
+
+            if username and password:
+                proxy = (
+                    type_,
+                    host,
+                    port,
+                    True,
+                    username,
+                    password,
+                )
+
+            logger.info(
+                "Proxy: %s %s:%s",
+                type_,
+                host,
+                port,
+            )
+            return proxy
+
+        if scheme == "http":
+            proxy = ("HTTP", host, port)
+
+            if username and password:
+                proxy = (
+                    "HTTP",
+                    host,
+                    port,
+                    True,
+                    username,
+                    password,
+                )
+
+            logger.info(
+                "Proxy: HTTP %s:%s",
+                host,
+                port,
+            )
+            return proxy
+
+        if scheme in (
+            "mtproto-proxy",
+            "mtproto",
+        ):
+            secret = parsed.fragment or ""
+            proxy = {
+                "proxy_type": "mtproto",
+                "address": host,
+                "port": port,
+                "secret": secret,
+            }
+            logger.info(
+                "Proxy: MTProto %s:%s",
+                host,
+                port,
+            )
+            return proxy
+
+    except Exception:
+        logger.exception(
+            "Proxy parse error"
+        )
+
+    return None
+
+
+# ==========================
 # Telethon Client
 # ==========================
 
@@ -162,11 +270,16 @@ client_kwargs = {
 if ConnectionTcpAbridged is not None:
     client_kwargs["connection"] = ConnectionTcpAbridged
 
+proxy_config = parse_proxy(PROXY)
+
+if proxy_config is not None:
+    client_kwargs["proxy"] = proxy_config
+
 client = TelegramClient(
     SESSION_NAME,
     API_ID,
     API_HASH,
-    timeout=15,
+    timeout=30,
     **client_kwargs
 )
 
