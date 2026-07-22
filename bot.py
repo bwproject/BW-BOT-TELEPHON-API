@@ -15,7 +15,7 @@ from telethon.errors import (
     PhoneCodeInvalidError,
     PhoneCodeExpiredError,
 )
-
+from telethon.network.connection import ConnectionTcpAbridged
 
 
 # ==========================
@@ -150,10 +150,17 @@ client = TelegramClient(
     SESSION_NAME,
     API_ID,
     API_HASH,
+
+    connection=ConnectionTcpAbridged,
+
     timeout=15,
+
     connection_retries=5,
+
     request_retries=3,
+
     retry_delay=2,
+
     use_ipv6=False
 )
 
