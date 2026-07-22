@@ -1,7 +1,6 @@
 #main.py
 
 import os
-import sys
 import asyncio
 import socket
 import time
@@ -39,9 +38,23 @@ PORT = int(
 
 
 
-# Telegram DC
-TELEGRAM_HOST = "149.154.167.51"
-TELEGRAM_PORT = 443
+
+
+# ==========================
+# Telegram DC servers
+# ==========================
+
+TELEGRAM_SERVERS = [
+
+    ("149.154.167.51", 443),  # DC4
+
+    ("149.154.167.50", 443),  # DC2
+
+    ("149.154.167.91", 443),  # DC1
+
+    ("149.154.175.100", 443), # DC5
+
+]
 
 
 
@@ -56,14 +69,19 @@ def check_telegram_network():
 
 
     print("=" * 40)
-    print("Telegram network check")
+
+    print(
+        "Telegram network check"
+    )
+
     print("=" * 40)
 
 
 
-    # DNS
+    # DNS check
 
     try:
+
 
         ip = socket.gethostbyname(
             "telegram.org"
@@ -84,54 +102,105 @@ def check_telegram_network():
 
 
 
-    # TCP Telegram DC
+    print("-" * 40)
+
 
     print(
-        f"Testing {TELEGRAM_HOST}:{TELEGRAM_PORT}"
+        "Testing Telegram DC servers"
     )
 
 
-    start = time.time()
+
+    success = False
 
 
 
-    try:
+    for host, port in TELEGRAM_SERVERS:
 
 
-        sock = socket.create_connection(
-
-            (
-                TELEGRAM_HOST,
-                TELEGRAM_PORT
-            ),
-
-            timeout=5
-
-        )
-
-
-        sock.close()
+        start = time.time()
 
 
 
-        delay = round(
-            time.time() - start,
-            3
-        )
+        try:
+
+
+            sock = socket.create_connection(
+
+                (
+                    host,
+                    port
+                ),
+
+                timeout=5
+
+            )
+
+
+            sock.close()
+
+
+
+            delay = round(
+
+                time.time() - start,
+
+                3
+
+            )
+
+
+
+            print(
+
+                f"✅ OK {host}:{port} ({delay}s)"
+
+            )
+
+
+            success = True
+
+
+
+        except Exception as e:
+
+
+            print(
+
+                f"❌ FAIL {host}:{port} -> {e}"
+
+            )
+
+
+
+    print("=" * 40)
+
+
+
+    if success:
 
 
         print(
-            f"TCP Telegram OK ({delay}s)"
+            "Telegram TCP connection available"
         )
 
 
-
-    except Exception as e:
+    else:
 
 
         print(
-            f"TCP Telegram FAILED: {e}"
+            "WARNING: Telegram TCP unavailable"
         )
+
+
+
+    print("=" * 40)
+
+
+
+    return success
+
+
 
 
 
@@ -147,26 +216,47 @@ async def startup():
 
     print("=" * 40)
 
+
     print(
         "Telegram API starting"
     )
+
 
     print(
         f"Server: {HOST}:{PORT}"
     )
 
+
+    print("=" * 40)
+
+
+
+    network_ok = check_telegram_network()
+
+
+
+    if not network_ok:
+
+
+        print(
+            "⚠️ Telegram network check failed"
+        )
+
+
+        print(
+            "Continue startup anyway"
+        )
+
+
+
     print("=" * 40)
 
 
-
-    check_telegram_network()
-
-
-
-    print("=" * 40)
     print(
         "Starting Telethon..."
     )
+
+
     print("=" * 40)
 
 
@@ -179,7 +269,7 @@ async def startup():
 
 
         print(
-            "Telegram client started"
+            "✅ Telegram client started"
         )
 
 
@@ -187,13 +277,15 @@ async def startup():
 
 
         print(
-            "Telegram client not connected"
+            "⚠️ Telegram client not connected"
         )
 
 
         print(
             "API will continue running"
         )
+
+
 
 
 
@@ -213,12 +305,14 @@ async def shutdown():
 
 
 
+
 # ==========================
 # Main
 # ==========================
 
 
 if __name__ == "__main__":
+
 
 
     asyncio.run(
