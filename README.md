@@ -1,373 +1,218 @@
-📱 BW Telegram Telethon API
+# BW Telegram Telethon API
 
 REST API сервис для управления Telegram аккаунтом через MTProto.
 
-Проект построен на:
+## Технологии
 
-* 🐍 Python
-* 📡 Telethon
-* ⚡ FastAPI
-* 🔐 Session авторизации Telegram
+- **Python** -- основной язык
+- **Telethon** -- MTProto клиент для Telegram
+- **FastAPI** -- HTTP API сервер
+- **Uvicorn** -- ASGI сервер
 
-Сервис позволяет авторизовать обычный Telegram аккаунт и использовать его возможности через HTTP API из других Python-проектов.
+## Возможности
 
-⸻
+### Авторизация Telegram
 
-🚀 Возможности
+- Отправка кода авторизации
+- Вход по коду
+- Поддержка двухфакторной аутентификации (2FA)
+- Сохранение session-файла (повторный запуск без повторного входа)
+- Авторизация через REST API или Telegram команду `/auth`
 
-🔐 Авторизация Telegram
+### Управление сообщениями
 
-Поддерживается:
+- Получение диалогов и сообщений
+- Отправка, редактирование, удаление сообщений
+- Пересылка сообщений
+- Поиск диалогов
 
-* отправка кода авторизации;
-* вход по коду Telegram;
-* поддержка двухфакторного пароля;
-* сохранение session-файла;
-* повторный запуск без повторного входа.
+### Файлы и медиа
 
-Авторизация доступна:
+- Отправка файлов
+- Скачивание медиа из сообщений
 
-* через REST API;
-* через Telegram команду /auth.
+### Каналы и группы
 
-⸻
+- Вступление в каналы/группы
+- Выход из каналов/групп
 
-📂 Структура проекта
+## Структура проекта
 
+```
 BW-BOT-TELEPHON-API/
-├── main.py              # Запуск FastAPI сервера
-├── api.py               # HTTP API маршруты
-├── bot.py               # Telethon клиент
-│
-├── .env                 # Настройки
-├── requirements.txt     # Зависимости
-│
-├── sessions/
-│   └── account.session  # Telegram авторизация
-│
-└── downloads/           # Загруженные файлы
+  main.py              # Точка входа
+  app.py               # FastAPI приложение + lifespan
+  api.py               # HTTP API маршруты
+  bot.py               # Telethon клиент и логика
+  .env.rename          # Пример файла .env
+  requirements.txt     # Зависимости
+  sessions/            # Telegram session файлы (создаётся автоматически)
+  downloads/           # Скачанные файлы (создаётся автоматически)
+  logs/                # Логи (создаётся автоматически)
+```
 
-⸻
+## Установка
 
-⚙️ Установка
+### 1. Клонирование
 
-1. Клонирование
-
+```bash
 git clone https://github.com/bwproject/BW-BOT-TELEPHON-API.git
 cd BW-BOT-TELEPHON-API
+```
 
-⸻
+### 2. Установка зависимостей
 
-2. Установка зависимостей
-
+```bash
 pip install -r requirements.txt
+```
 
-⸻
+### 3. Получение API_ID и API_HASH
 
-3. Настройка .env
+1. Перейдите на [my.telegram.org](https://my.telegram.org)
+2. Войдите через номер телефона
+3. Создайте приложение в разделе **API development tools**
+4. Скопируйте `API_ID` и `API_HASH`
 
-Создать файл:
+### 4. Настройка окружения
 
-.env
+Скопируйте `.env.rename` в `.env` и заполните:
 
-Пример:
-
+```env
 API_ID=12345678
-API_HASH=xxxxxxxxxxxxxxxxxxxx
+API_HASH=your_api_hash_here
 PHONE=+70000000000
 SESSION_NAME=sessions/account
 HOST=0.0.0.0
 PORT=8000
 API_TOKEN=
+```
 
-⸻
+| Переменная | Описание | По умолчанию |
+|---|---|---|
+| `API_ID` | ID приложения Telegram | -- |
+| `API_HASH` | Хеш приложения Telegram | -- |
+| `SESSION_NAME` | Путь к session-файлу | `sessions/account` |
+| `HOST` | Адрес сервера | `0.0.0.0` |
+| `PORT` | Порт сервера | `8000` |
+| `API_TOKEN` | Токен для защиты API | -- |
 
-🔑 Получение API_ID и API_HASH
+## Запуск
 
-Перейдите:
-
-https://my.telegram.org
-
-Создайте приложение Telegram API.
-
-Полученные данные:
-
-API_ID
-API_HASH
-
-укажите в .env.
-
-⸻
-
-▶️ Запуск
-
+```bash
 python main.py
+```
 
-После запуска:
+После запуска будет проведена проверка сети Telegram, затем запущен Telethon клиент и FastAPI сервер.
 
-Telegram API starting
-Server:
-0.0.0.0:8000
-Telegram:
-❌ Need login
+Swagger документация доступна по адресу: `http://localhost:8000/docs`
 
-или:
+## API эндпоинты
 
-Telegram:
-✅ Authorized
+### Авторизация
 
-⸻
+| Метод | Путь | Описание |
+|---|---|---|
+| `POST` | `/auth/send_code` | Отправить код авторизации |
+| `POST` | `/auth/sign_in` | Войти по коду |
+| `POST` | `/auth/password` | Ввести пароль 2FA |
+| `GET` | `/auth/status` | Проверить статус авторизации |
 
-🌐 Swagger документация
+### Аккаунт
 
-После запуска открыть:
+| Метод | Путь | Описание |
+|---|---|---|
+| `GET` | `/me` | Информация об аккаунте |
 
-http://SERVER_IP:8000/docs
+### Диалоги и сообщения
 
-FastAPI автоматически создаст интерактивную документацию API.
+| Метод | Путь | Описание |
+|---|---|---|
+| `GET` | `/dialogs?limit=50` | Список диалогов |
+| `GET` | `/messages?peer=@username&limit=20` | Сообщения диалога |
+| `GET` | `/search?query=text&limit=20` | Поиск диалогов |
+| `POST` | `/send` | Отправить сообщение |
+| `POST` | `/edit` | Редактировать сообщение |
+| `POST` | `/delete` | Удалить сообщение |
+| `POST` | `/forward` | Переслать сообщение |
 
-⸻
+### Файлы
 
-🔐 Авторизация через API
+| Метод | Путь | Описание |
+|---|---|---|
+| `POST` | `/upload` | Отправить файл |
+| `POST` | `/download` | Скачать медиа |
 
-Отправить код
+### Каналы
 
-POST /auth/send_code
+| Метод | Путь | Описание |
+|---|---|---|
+| `POST` | `/join` | Вступить в канал/группу |
+| `POST` | `/leave` | Покинуть канал/группу |
 
-JSON:
+## Примеры запросов
 
-{
-    "phone":"+70000000000"
-}
+### Отправка кода
 
-⸻
+```bash
+curl -X POST http://localhost:8000/auth/send_code \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "+79999999999"}'
+```
 
-Ввести код
+### Вход по коду
 
-POST /auth/sign_in
+```bash
+curl -X POST http://localhost:8000/auth/sign_in \
+  -H "Content-Type: application/json" \
+  -d '{"code": "12345"}'
+```
 
-JSON:
+### Отправка сообщения
 
-{
-    "code":"12345"
-}
+```bash
+curl -X POST http://localhost:8000/send \
+  -H "Content-Type: application/json" \
+  -d '{"peer": "@username", "text": "Привет!"}'
+```
 
-⸻
+### Получение диалогов
 
-Ввести пароль 2FA
+```bash
+curl http://localhost:8000/dialogs?limit=10
+```
 
-POST /auth/password
+### Использование из Python
 
-JSON:
-
-{
-    "password":"password"
-}
-
-⸻
-
-Проверка авторизации
-
-GET /auth/status
-
-Ответ:
-
-{
-    "authorized":true
-}
-
-⸻
-
-👤 Информация об аккаунте
-
-GET /me
-
-Ответ:
-
-{
-    "id":123456,
-    "first_name":"User",
-    "username":"username"
-}
-
-⸻
-
-💬 Сообщения
-
-Получить сообщения
-
-GET /messages?peer=@username&limit=20
-
-⸻
-
-Отправить сообщение
-
-POST /send
-
-JSON:
-
-{
-    "peer":"@username",
-    "text":"Привет!"
-}
-
-⸻
-
-Редактировать сообщение
-
-POST /edit
-
-JSON:
-
-{
-    "peer":"@username",
-    "message_id":10,
-    "text":"Новое сообщение"
-}
-
-⸻
-
-Удалить сообщение
-
-POST /delete
-
-JSON:
-
-{
-    "peer":"@username",
-    "message_id":10
-}
-
-⸻
-
-📁 Работа с файлами
-
-Отправить файл
-
-POST /upload
-
-JSON:
-
-{
-    "peer":"@username",
-    "file_path":"photo.jpg",
-    "caption":"Фото"
-}
-
-⸻
-
-Скачать медиа
-
-POST /download
-
-JSON:
-
-{
-    "peer":"@username",
-    "message_id":15
-}
-
-⸻
-
-🔄 Пересылка сообщений
-
-POST /forward
-
-JSON:
-
-{
-    "from_peer":"@source",
-    "message_id":15,
-    "to_peer":"@target"
-}
-
-⸻
-
-📢 Каналы и группы
-
-Вступить
-
-POST /join
-
-JSON:
-
-{
-    "username":"@channel"
-}
-
-⸻
-
-Покинуть
-
-POST /leave
-
-JSON:
-
-{
-    "username":"@channel"
-}
-
-⸻
-
-🤖 Авторизация через Telegram
-
-Отправьте аккаунту:
-
-/auth
-
-Дальше:
-
-1. Введите номер телефона.
-2. Получите код Telegram.
-3. Введите код.
-4. Если включена 2FA — введите пароль.
-
-После успешного входа:
-
-✅ Авторизация завершена
-
-⸻
-
-🐍 Использование из другого Python проекта
-
-Пример:
-
+```python
 import requests
+
 requests.post(
     "http://127.0.0.1:8000/send",
     json={
-        "peer":"@username",
-        "text":"Сообщение отправлено через API"
+        "peer": "@username",
+        "text": "Сообщение через API"
     }
 )
+```
 
-⸻
+## Авторизация через Telegram
 
-🛡️ Безопасность
+Отправьте команду `/auth` аккаунту в Telegram:
 
-Рекомендуется:
+1. Введите номер телефона
+2. Получите код в Telegram
+3. Введите код
+4. Если включена 2FA -- введите пароль
 
-* не публиковать .env;
-* не передавать session-файл третьим лицам;
-* использовать API_TOKEN при открытии сервиса наружу;
-* запускать API за Nginx/Caddy при использовании через интернет.
+После успешного входа session сохраняется в `sessions/`.
 
-⸻
+## Безопасность
 
-🛠️ Планы развития
+- Не публикуйте `.env` файл
+- Не передавайте `session` файл третьим лицам
+- Используйте `API_TOKEN` при открытии сервиса наружу
+- Запускайте за Nginx/Caddy при использовании через интернет
 
-Возможные улучшения:
-
-* WebSocket события новых сообщений;
-* несколько Telegram аккаунтов;
-* очередь сообщений;
-* обработка FloodWait;
-* Docker Compose;
-* Web UI управление аккаунтом;
-* webhook события.
-
-⸻
-
-📜 License
+## Лицензия
 
 MIT License
