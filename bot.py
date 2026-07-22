@@ -3,13 +3,13 @@
 import os
 import sys
 import logging
-from pathlib import Path
 
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-
 from telethon import TelegramClient, events
+
 from telethon.errors import (
     SessionPasswordNeededError,
     PhoneCodeInvalidError,
@@ -51,8 +51,9 @@ SESSION_NAME = os.getenv(
 # Logging
 # ==========================
 
-
-Path("logs").mkdir(
+Path(
+    "logs"
+).mkdir(
     exist_ok=True
 )
 
@@ -96,6 +97,17 @@ logger = logging.getLogger(
 # Session
 # ==========================
 
+#
+# Важно:
+# Telethon сам создаёт файл:
+#
+# sessions/account.session
+#
+# после успешной авторизации.
+#
+# Мы создаём только папку.
+#
+
 
 Path(
     SESSION_NAME
@@ -110,15 +122,18 @@ logger.info(
     "Loading Telegram client"
 )
 
+
 logger.info(
     "API_ID=%s",
     API_ID
 )
 
+
 logger.info(
     "API_HASH length=%s",
     len(API_HASH)
 )
+
 
 logger.info(
     "SESSION=%s",
@@ -130,15 +145,36 @@ logger.info(
 # ==========================
 # Telethon Client
 # ==========================
-from telethon.network.connection import ConnectionTcpFull
 
 
 client = TelegramClient(
+
     SESSION_NAME,
+
     API_ID,
+
     API_HASH,
-    connection=ConnectionTcpFull
+
+
+    # таймаут подключения
+    timeout=15,
+
+
+    # количество попыток соединения
+    connection_retries=3,
+
+
+    # повтор запросов Telegram API
+    request_retries=3,
+
+
+    # отключаем IPv6
+    # на VPS часто вызывает зависание
+    use_ipv6=False
+
 )
+
+
 
 # ==========================
 # Login storage
@@ -146,9 +182,6 @@ client = TelegramClient(
 
 
 login_data = {}
-
-
-
 # ==========================
 # Connection
 # ==========================
@@ -165,10 +198,10 @@ async def connect():
     if client.is_connected():
 
         logger.info(
-            "Already connected"
+            "Telegram already connected"
         )
 
-        return
+        return True
 
 
 
@@ -176,7 +209,7 @@ async def connect():
 
 
         logger.info(
-            "Connecting to Telegram MTProto..."
+            "Connecting to Telegram..."
         )
 
 
@@ -184,10 +217,24 @@ async def connect():
 
 
 
-        logger.info(
-            "Connected=%s",
-            client.is_connected()
+        if client.is_connected():
+
+
+            logger.info(
+                "Telegram connection SUCCESS"
+            )
+
+
+            return True
+
+
+
+        logger.error(
+            "Telegram connection FAILED"
         )
+
+
+        return False
 
 
 
@@ -195,11 +242,11 @@ async def connect():
 
 
         logger.exception(
-            "Telegram connection failed"
+            "Telegram connection error"
         )
 
 
-        raise e
+        return False
 
 
 
@@ -213,33 +260,73 @@ async def disconnect():
     )
 
 
-    if client.is_connected():
-
-        await client.disconnect()
+    try:
 
 
-        logger.info(
-            "Disconnected"
+        if client.is_connected():
+
+
+            await client.disconnect()
+
+
+
+            logger.info(
+                "Telegram disconnected"
+            )
+
+
+
+    except Exception:
+
+
+        logger.exception(
+            "Disconnect error"
         )
+
+
 
 
 
 async def is_authorized():
 
 
-    await connect()
+    connected = await connect()
 
 
-    result = await client.is_user_authorized()
+    if not connected:
 
 
-    logger.info(
-        "Authorization status=%s",
-        result
-    )
+        return False
 
 
-    return result
+
+    try:
+
+
+        result = await client.is_user_authorized()
+
+
+
+        logger.info(
+            "Authorization status=%s",
+            result
+        )
+
+
+        return result
+
+
+
+    except Exception:
+
+
+        logger.exception(
+            "Authorization check error"
+        )
+
+
+        return False
+
 
 
 
@@ -253,56 +340,131 @@ async def send_code(phone):
 
 
     logger.info(
-        "Send auth code to %s",
-        phone
-    )
-
-
-    await connect()
-
-
-
-    result = await client.send_code_request(
+        "Sending auth code to %s",
         phone
     )
 
 
 
-    login_data["phone"] = phone
-
-    login_data["hash"] = (
-        result.phone_code_hash
-    )
+    connected = await connect()
 
 
-
-    logger.info(
-        "Auth code sent"
-    )
+    if not connected:
 
 
+        return {
 
-    return {
 
-        "status": "code_sent",
+            "success": False,
 
-        "phone_code_hash":
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
+
+
+
+    try:
+
+
+        result = await client.send_code_request(
+
+            phone
+
+        )
+
+
+
+        login_data["phone"] = phone
+
+
+        login_data["hash"] = (
             result.phone_code_hash
+        )
 
-    }
+
+
+        logger.info(
+            "Telegram auth code sent"
+        )
+
+
+
+        return {
+
+
+            "success": True,
+
+
+            "status":
+                "code_sent",
+
+
+            "phone_code_hash":
+                result.phone_code_hash
+
+
+        }
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+            "Send code error"
+        )
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                str(e)
+
+
+        }
+
+
+
+
+
 # ==========================
-# Sign in
+# Sign in by code
 # ==========================
 
 
 async def sign_in(code):
 
+
     logger.info(
-        "Trying sign in with code"
+        "Trying login with code"
     )
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
+
 
 
     phone = login_data.get(
@@ -315,16 +477,24 @@ async def sign_in(code):
     )
 
 
+
     if not phone:
 
+
         logger.warning(
-            "Phone not found. Send code first"
+            "Phone missing"
         )
+
 
         return {
 
+
+            "success": False,
+
+
             "error":
-                "send code first"
+                "send_code_first"
+
 
         }
 
@@ -344,15 +514,18 @@ async def sign_in(code):
         )
 
 
+
         logger.info(
-            "Authorization successful"
+            "Telegram authorization successful"
         )
+
 
 
         return {
 
-            "success":
-                True
+
+            "success": True
+
 
         }
 
@@ -362,17 +535,19 @@ async def sign_in(code):
 
 
         logger.warning(
-            "Two-factor password required"
+            "2FA password required"
         )
 
 
         return {
 
-            "success":
-                False,
+
+            "success": False,
+
 
             "password_required":
                 True
+
 
         }
 
@@ -388,11 +563,13 @@ async def sign_in(code):
 
         return {
 
-            "success":
-                False,
+
+            "success": False,
+
 
             "error":
                 "invalid_code"
+
 
         }
 
@@ -408,11 +585,13 @@ async def sign_in(code):
 
         return {
 
-            "success":
-                False,
+
+            "success": False,
+
 
             "error":
                 "code_expired"
+
 
         }
 
@@ -428,18 +607,15 @@ async def sign_in(code):
 
         return {
 
-            "success":
-                False,
+
+            "success": False,
+
 
             "error":
                 str(e)
 
+
         }
-
-
-
-
-
 # ==========================
 # 2FA Password
 # ==========================
@@ -453,15 +629,35 @@ async def password(password):
     )
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
+
 
 
     try:
 
 
         await client.sign_in(
+
             password=password
+
         )
+
 
 
         logger.info(
@@ -471,8 +667,9 @@ async def password(password):
 
         return {
 
-            "success":
-                True
+
+            "success": True
+
 
         }
 
@@ -488,13 +685,16 @@ async def password(password):
 
         return {
 
-            "success":
-                False,
+
+            "success": False,
+
 
             "error":
                 str(e)
 
+
         }
+
 
 
 
@@ -512,58 +712,82 @@ async def get_me():
     )
 
 
-    await connect()
+    connected = await connect()
 
 
-    user = await client.get_me()
-
-
-
-    if not user:
-
-        logger.warning(
-            "No user returned"
-        )
+    if not connected:
 
 
         return None
 
 
 
-    result = {
+    try:
 
 
-        "id":
-            user.id,
-
-
-        "first_name":
-            user.first_name,
-
-
-        "last_name":
-            user.last_name,
-
-
-        "username":
-            user.username,
-
-
-        "phone":
-            user.phone
-
-
-    }
+        user = await client.get_me()
 
 
 
-    logger.info(
-        "Current user: %s",
-        result
-    )
+        if not user:
 
 
-    return result
+            logger.warning(
+                "Telegram user not found"
+            )
+
+
+            return None
+
+
+
+        result = {
+
+
+            "id":
+                user.id,
+
+
+            "first_name":
+                user.first_name,
+
+
+            "last_name":
+                user.last_name,
+
+
+            "username":
+                user.username,
+
+
+            "phone":
+                user.phone
+
+
+        }
+
+
+
+        logger.info(
+            "Current user: %s",
+            result
+        )
+
+
+        return result
+
+
+
+    except Exception:
+
+
+        logger.exception(
+            "Get account info error"
+        )
+
+
+        return None
+
 
 
 
@@ -582,70 +806,93 @@ async def get_dialogs(limit=50):
     )
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return []
+
 
 
     result = []
 
 
 
-    async for dialog in client.iter_dialogs(
-
-        limit=limit
-
-    ):
+    try:
 
 
-        entity = dialog.entity
+        async for dialog in client.iter_dialogs(
+
+            limit=limit
+
+        ):
 
 
-
-        result.append({
-
-
-            "id":
-                dialog.id,
-
-
-            "name":
-                dialog.name,
-
-
-            "username":
-                getattr(
-
-                    entity,
-
-                    "username",
-
-                    None
-
-                ),
-
-
-            "unread":
-                dialog.unread_count,
-
-
-            "type":
-                entity.__class__.__name__
-
-
-        })
+            entity = dialog.entity
 
 
 
-    logger.info(
-
-        "Dialogs loaded: %s",
-
-        len(result)
-
-    )
+            result.append({
 
 
+                "id":
+                    dialog.id,
 
-    return result
+
+                "name":
+                    dialog.name,
+
+
+                "username":
+                    getattr(
+
+                        entity,
+
+                        "username",
+
+                        None
+
+                    ),
+
+
+                "unread":
+                    dialog.unread_count,
+
+
+                "type":
+                    entity.__class__.__name__
+
+
+            })
+
+
+
+        logger.info(
+            "Dialogs loaded: %s",
+            len(result)
+        )
+
+
+        return result
+
+
+
+    except Exception:
+
+
+        logger.exception(
+            "Get dialogs error"
+        )
+
+
+        return []
+
+
+
+
+
 # ==========================
 # Messages
 # ==========================
@@ -656,6 +903,7 @@ async def get_messages(
         limit=20
 ):
 
+
     logger.info(
         "Loading messages peer=%s limit=%s",
         peer,
@@ -663,7 +911,14 @@ async def get_messages(
     )
 
 
-    await connect()
+
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return []
 
 
 
@@ -713,11 +968,8 @@ async def get_messages(
 
 
         logger.info(
-
             "Messages loaded: %s",
-
             len(messages)
-
         )
 
 
@@ -726,7 +978,7 @@ async def get_messages(
 
 
 
-    except Exception as e:
+    except Exception:
 
 
         logger.exception(
@@ -734,12 +986,7 @@ async def get_messages(
         )
 
 
-        return {
-
-            "error":
-                str(e)
-
-        }
+        return []
 
 
 
@@ -762,7 +1009,23 @@ async def send_message(
     )
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
 
 
 
@@ -780,11 +1043,8 @@ async def send_message(
 
 
         logger.info(
-
             "Message sent id=%s",
-
             message.id
-
         )
 
 
@@ -792,8 +1052,7 @@ async def send_message(
         return {
 
 
-            "success":
-                True,
+            "success": True,
 
 
             "id":
@@ -821,12 +1080,12 @@ async def send_message(
         return {
 
 
-            "success":
-                False,
+            "success": False,
 
 
             "error":
                 str(e)
+
 
         }
 
@@ -847,18 +1106,30 @@ async def edit_message(
 
 
     logger.info(
-
         "Edit message peer=%s id=%s",
-
         peer,
-
         message_id
-
     )
 
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
 
 
 
@@ -878,11 +1149,8 @@ async def edit_message(
 
 
         logger.info(
-
             "Message edited id=%s",
-
             message.id
-
         )
 
 
@@ -890,8 +1158,7 @@ async def edit_message(
         return {
 
 
-            "success":
-                True,
+            "success": True,
 
 
             "id":
@@ -913,12 +1180,12 @@ async def edit_message(
         return {
 
 
-            "success":
-                False,
+            "success": False,
 
 
             "error":
                 str(e)
+
 
         }
 
@@ -938,18 +1205,29 @@ async def delete_message(
 
 
     logger.info(
-
         "Delete message peer=%s id=%s",
-
         peer,
-
         message_id
-
     )
 
 
+    connected = await connect()
 
-    await connect()
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
 
 
 
@@ -975,8 +1253,7 @@ async def delete_message(
         return {
 
 
-            "success":
-                True
+            "success": True
 
 
         }
@@ -994,12 +1271,12 @@ async def delete_message(
         return {
 
 
-            "success":
-                False,
+            "success": False,
 
 
             "error":
                 str(e)
+
 
         }
 # ==========================
@@ -1013,6 +1290,7 @@ async def send_file(
         caption=None
 ):
 
+
     logger.info(
         "Sending file=%s to=%s",
         file_path,
@@ -1020,7 +1298,23 @@ async def send_file(
     )
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
 
 
 
@@ -1038,20 +1332,18 @@ async def send_file(
         )
 
 
+
         logger.info(
-
             "File sent id=%s",
-
             message.id
-
         )
+
 
 
         return {
 
 
-            "success":
-                True,
+            "success": True,
 
 
             "id":
@@ -1073,12 +1365,12 @@ async def send_file(
         return {
 
 
-            "success":
-                False,
+            "success": False,
 
 
             "error":
                 str(e)
+
 
         }
 
@@ -1099,17 +1391,29 @@ async def download_media(
 
 
     logger.info(
-
         "Download media peer=%s id=%s",
-
         peer,
-
         message_id
-
     )
 
 
-    await connect()
+    connected = await connect()
+
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
 
 
 
@@ -1140,17 +1444,14 @@ async def download_media(
 
 
             logger.warning(
-
                 "Message not found"
-
             )
 
 
             return {
 
 
-                "success":
-                    False,
+                "success": False,
 
 
                 "error":
@@ -1165,17 +1466,14 @@ async def download_media(
 
 
             logger.warning(
-
-                "Message has no media"
-
+                "No media in message"
             )
 
 
             return {
 
 
-                "success":
-                    False,
+                "success": False,
 
 
                 "error":
@@ -1197,20 +1495,15 @@ async def download_media(
 
 
         logger.info(
-
             "Media downloaded: %s",
-
             file
-
         )
-
 
 
         return {
 
 
-            "success":
-                True,
+            "success": True,
 
 
             "file":
@@ -1232,12 +1525,12 @@ async def download_media(
         return {
 
 
-            "success":
-                False,
+            "success": False,
 
 
             "error":
                 str(e)
+
 
         }
 
@@ -1258,18 +1551,29 @@ async def forward_message(
 
 
     logger.info(
-
         "Forward message %s -> %s",
-
         from_peer,
-
         to_peer
-
     )
 
 
+    connected = await connect()
 
-    await connect()
+
+    if not connected:
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                "telegram_connection_failed"
+
+
+        }
 
 
 
@@ -1289,20 +1593,15 @@ async def forward_message(
 
 
         logger.info(
-
             "Message forwarded id=%s",
-
             result.id
-
         )
-
 
 
         return {
 
 
-            "success":
-                True,
+            "success": True,
 
 
             "id":
@@ -1317,21 +1616,19 @@ async def forward_message(
 
 
         logger.exception(
-
-            "Forward error"
-
+            "Forward message error"
         )
 
 
         return {
 
 
-            "success":
-                False,
+            "success": False,
 
 
             "error":
                 str(e)
+
 
         }
 
@@ -1351,16 +1648,18 @@ async def search_dialogs(
 
 
     logger.info(
-
         "Search dialogs query=%s",
-
         query
-
     )
 
 
+    connected = await connect()
 
-    await connect()
+
+    if not connected:
+
+
+        return []
 
 
 
@@ -1368,66 +1667,78 @@ async def search_dialogs(
 
 
 
-    async for dialog in client.iter_dialogs():
+    try:
 
 
-        name = dialog.name or ""
+        async for dialog in client.iter_dialogs():
 
 
-
-        if query.lower() in name.lower():
-
-
-            result.append({
-
-
-                "id":
-                    dialog.id,
-
-
-                "name":
-                    dialog.name,
-
-
-                "username":
-                    getattr(
-
-                        dialog.entity,
-
-                        "username",
-
-                        None
-
-                    )
-
-
-            })
+            name = dialog.name or ""
 
 
 
-        if len(result) >= limit:
-
-            break
+            if query.lower() in name.lower():
 
 
-
-    logger.info(
-
-        "Search result count=%s",
-
-        len(result)
-
-    )
+                result.append({
 
 
-    return result
+                    "id":
+                        dialog.id,
+
+
+                    "name":
+                        dialog.name,
+
+
+                    "username":
+                        getattr(
+
+                            dialog.entity,
+
+                            "username",
+
+                            None
+
+                        )
+
+
+                })
+
+
+
+            if len(result) >= limit:
+
+                break
+
+
+
+        logger.info(
+            "Search result count=%s",
+            len(result)
+        )
+
+
+        return result
+
+
+
+    except Exception:
+
+
+        logger.exception(
+            "Search dialogs error"
+        )
+
+
+        return []
 
 
 
 
 
 # ==========================
-# Join channel
+# Join channel/group
 # ==========================
 
 
@@ -1437,57 +1748,92 @@ async def join_channel(
 
 
     logger.info(
-
         "Join channel %s",
-
         username
-
     )
 
 
-
-    await connect()
-
+    connected = await connect()
 
 
-    entity = await client.get_entity(
-
-        username
-
-    )
+    if not connected:
 
 
-    await client.join_channel(
-
-        entity
-
-    )
+        return {
 
 
-    logger.info(
+            "success": False,
 
-        "Joined channel %s",
 
-        username
+            "error":
+                "telegram_connection_failed"
 
-    )
+
+        }
 
 
 
-    return {
+    try:
 
 
-        "success":
-            True
+        entity = await client.get_entity(
 
-    }
+            username
+
+        )
+
+
+
+        await client.join_channel(
+
+            entity
+
+        )
+
+
+
+        logger.info(
+            "Joined channel %s",
+            username
+        )
+
+
+        return {
+
+
+            "success": True
+
+
+        }
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+            "Join channel error"
+        )
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                str(e)
+
+
+        }
 
 
 
 
 
 # ==========================
-# Leave channel
+# Leave channel/group
 # ==========================
 
 
@@ -1497,51 +1843,85 @@ async def leave_channel(
 
 
     logger.info(
-
         "Leave channel %s",
-
         username
-
     )
 
 
-
-    await connect()
-
+    connected = await connect()
 
 
-    entity = await client.get_entity(
-
-        username
-
-    )
+    if not connected:
 
 
-
-    await client.delete_dialog(
-
-        entity
-
-    )
+        return {
 
 
-    logger.info(
+            "success": False,
 
-        "Left channel %s",
 
-        username
+            "error":
+                "telegram_connection_failed"
 
-    )
+
+        }
 
 
 
-    return {
+    try:
 
 
-        "success":
-            True
+        entity = await client.get_entity(
 
-    }
+            username
+
+        )
+
+
+
+        await client.delete_dialog(
+
+            entity
+
+        )
+
+
+
+        logger.info(
+            "Left channel %s",
+            username
+        )
+
+
+        return {
+
+
+            "success": True
+
+
+        }
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+            "Leave channel error"
+        )
+
+
+        return {
+
+
+            "success": False,
+
+
+            "error":
+                str(e)
+
+
+        }
 # ==========================
 # Telegram auth command
 # ==========================
@@ -1560,25 +1940,38 @@ async def auth_command(event):
 
 
     logger.info(
-        "Auth command from %s",
+        "Auth command from user=%s",
         event.sender_id
     )
 
 
 
-    if await client.is_user_authorized():
+    try:
 
 
-        await event.reply(
-            "✅ Telegram уже авторизован"
+        if await client.is_user_authorized():
+
+
+            await event.reply(
+                "✅ Telegram уже авторизован"
+            )
+
+
+            return
+
+
+
+    except Exception:
+
+
+        logger.exception(
+            "Authorization check failed"
         )
-
-
-        return
 
 
 
     auth_state.clear()
+
 
 
     auth_state["chat_id"] = (
@@ -1594,7 +1987,8 @@ async def auth_command(event):
 
     await event.reply(
         "Введите номер телефона:\n"
-        "Пример: +79999999999"
+        "Пример:\n"
+        "+79999999999"
     )
 
 
@@ -1608,6 +2002,7 @@ async def auth_messages(event):
 
 
     text = event.text
+
 
 
     if not text:
@@ -1634,6 +2029,8 @@ async def auth_messages(event):
 
 
 
+
+
     # ======================
     # Phone
     # ======================
@@ -1646,17 +2043,23 @@ async def auth_messages(event):
 
 
 
-        try:
+        result = await send_code(
+
+            phone
+
+        )
 
 
-            await send_code(
-                phone
-            )
+
+        if result.get(
+            "success"
+        ):
 
 
             auth_state["step"] = (
                 "code"
             )
+
 
 
             await event.reply(
@@ -1665,20 +2068,20 @@ async def auth_messages(event):
             )
 
 
-        except Exception as e:
 
-
-            logger.exception(
-                "Send auth code error"
-            )
+        else:
 
 
             await event.reply(
-                f"❌ Ошибка: {e}"
+
+                f"❌ Ошибка: {result}"
+
             )
 
 
+
         return
+
 
 
 
@@ -1690,7 +2093,6 @@ async def auth_messages(event):
 
 
     if step == "code":
-
 
 
         result = await sign_in(
@@ -1731,7 +2133,8 @@ async def auth_messages(event):
 
 
             await event.reply(
-                "✅ Авторизация успешна"
+                "✅ Авторизация успешна\n"
+                "Session сохранена"
             )
 
 
@@ -1744,6 +2147,7 @@ async def auth_messages(event):
                 f"❌ Ошибка: {result}"
 
             )
+
 
 
         return
@@ -1780,15 +2184,19 @@ async def auth_messages(event):
 
 
             await event.reply(
-                "✅ Авторизация завершена"
+                "✅ Авторизация завершена\n"
+                "Session сохранена"
             )
+
 
 
         else:
 
 
             await event.reply(
+
                 f"❌ Ошибка: {result}"
+
             )
 
 
@@ -1814,11 +2222,23 @@ async def start_bot():
     )
 
 
-
     try:
 
 
-        await connect()
+        connected = await connect()
+
+
+
+        if not connected:
+
+
+            logger.warning(
+                "Telegram unavailable"
+            )
+
+
+            return False
+
 
 
 
@@ -1836,6 +2256,7 @@ async def start_bot():
             )
 
 
+
         else:
 
 
@@ -1845,16 +2266,12 @@ async def start_bot():
 
 
 
-    except Exception as e:
+    except Exception:
 
 
         logger.exception(
-            "Bot startup failed"
+            "Bot startup error"
         )
-
-
-        # Не падаем полностью
-        # API продолжит работать
 
 
         return False
@@ -1862,6 +2279,7 @@ async def start_bot():
 
 
     return True
+
 
 
 
@@ -1887,9 +2305,11 @@ async def stop_bot():
         await disconnect()
 
 
-    except Exception as e:
+
+    except Exception:
 
 
         logger.exception(
             "Shutdown error"
         )
+
