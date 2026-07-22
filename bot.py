@@ -146,35 +146,16 @@ logger.info(
 # Telethon Client
 # ==========================
 
-
 client = TelegramClient(
-
     SESSION_NAME,
-
     API_ID,
-
     API_HASH,
-
-
-    # таймаут подключения
     timeout=15,
-
-
-    # количество попыток соединения
-    connection_retries=3,
-
-
-    # повтор запросов Telegram API
+    connection_retries=5,
     request_retries=3,
-
-
-    # отключаем IPv6
-    # на VPS часто вызывает зависание
+    retry_delay=2,
     use_ipv6=False
-
 )
-
-
 
 # ==========================
 # Login storage
