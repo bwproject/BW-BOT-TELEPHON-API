@@ -2,9 +2,8 @@ import mimetypes
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, Form, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 
 import bot
 from api import require_web_token
@@ -13,12 +12,7 @@ router = APIRouter(prefix="/api/telegramweb", tags=["Telegram Web Media"])
 
 
 def _peer(value):
-    """Resolve browser peer values correctly for Telethon.
-
-    Dialogs without a public username are sent by the web UI as their
-    numeric Telegram ID. Telethon must receive that value as int, not as
-    a numeric string (which it may try to resolve as a username).
-    """
+    """Resolve browser peer values correctly for Telethon."""
     value = str(value).strip()
     if value.lstrip("-").isdigit():
         return int(value)
@@ -106,6 +100,57 @@ async def send_text(data: dict):
     except Exception as exc:
         bot.logger.exception("Web send text error peer=%s", peer)
         raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/send_file", dependencies=[Depends(require_web_token)])
+async def send_file(
+    dialog_id: str = Form(...),
+    file: UploadFile = File(...),
+    caption: str = Form(default=""),
+):
+    """Upload a browser attachment and send it through the authorized Telethon account."""
+    if not await bot.is_authorized():
+        raise HTTPException(401, "Telegram account is not authorized")
+
+    temp_dir = Path(tempfile.mkdtemp(prefix="tg-upload-"))
+    filename = Path(file.filename or "attachment").name
+    target = temp_dir / filename
+
+    try:
+        with target.open("wb") as output:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                output.write(chunk)
+
+        if target.stat().st_size <= 0:
+            raise HTTPException(400, "Uploaded file is empty")
+
+        message = await bot.client.send_file(
+            _peer(dialog_id),
+            str(target),
+            caption=caption.strip() or None,
+        )
+
+        return {
+            "success": True,
+            "id": message.id,
+            "date": message.date.isoformat() if message.date else None,
+            "filename": filename,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        bot.logger.exception("Web send file error peer=%s file=%s", dialog_id, filename)
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        try:
+            for child in temp_dir.iterdir():
+                child.unlink(missing_ok=True)
+            temp_dir.rmdir()
+        except Exception:
+            pass
 
 
 @router.get("/avatar/{peer}", dependencies=[Depends(require_web_token)])
