@@ -1,4 +1,5 @@
 import os
+import secrets
 import tempfile
 from pathlib import Path
 
@@ -9,51 +10,70 @@ from pydantic import BaseModel
 import bot
 
 load_dotenv()
+
 API_TOKEN = os.getenv("API_TOKEN", "").strip()
+WEB_USERNAME = os.getenv("WEB_USERNAME", "admin").strip()
+WEB_PASSWORD = os.getenv("WEB_PASSWORD", "").strip()
 
 router = APIRouter(tags=["Telegram"])
+web_router = APIRouter(prefix="/api/telegramweb", tags=["Telegram Web"])
 
 
 async def require_api_token(authorization: str | None = Header(default=None)):
     if not API_TOKEN:
         raise HTTPException(500, "API_TOKEN is not configured on Telegram API server")
+
     scheme, _, token = (authorization or "").partition(" ")
-    if scheme.lower() != "bearer" or token.strip() != API_TOKEN:
+    if scheme.lower() != "bearer" or not secrets.compare_digest(token.strip(), API_TOKEN):
         raise HTTPException(401, "Invalid API token")
+
     return True
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 
 class SendCodeRequest(BaseModel):
     phone: str
 
+
 class SignInRequest(BaseModel):
     code: str
+
 
 class PasswordRequest(BaseModel):
     password: str
 
+
 class SendMessageRequest(BaseModel):
     peer: str | int
     text: str
+
 
 class EditMessageRequest(BaseModel):
     peer: str | int
     message_id: int
     text: str
 
+
 class DeleteMessageRequest(BaseModel):
     peer: str | int
     message_id: int
+
 
 class DownloadRequest(BaseModel):
     peer: str | int
     message_id: int
     folder: str = "downloads"
 
+
 class ForwardRequest(BaseModel):
     from_peer: str | int
     message_id: int
     to_peer: str | int
+
 
 class ChannelRequest(BaseModel):
     username: str
@@ -63,12 +83,122 @@ async def account_state():
     connected = await bot.connect()
     authorized = False
     user = None
+
     if connected:
         authorized = await bot.is_authorized()
         if authorized:
             user = await bot.get_me()
+
     return connected, authorized, user
 
+
+# ============================================================
+# WEB LOGIN
+# ============================================================
+
+@web_router.post("/auth/login")
+async def web_login(data: LoginRequest):
+    """Login used by the Telegram Web UI.
+
+    The returned token is the server-side API_TOKEN. It is then sent by
+    the browser as Authorization: Bearer <token> for all Telegram calls.
+    """
+    if not WEB_PASSWORD:
+        raise HTTPException(500, "WEB_PASSWORD is not configured on Telegram API server")
+
+    username_ok = secrets.compare_digest(data.username.strip(), WEB_USERNAME)
+    password_ok = secrets.compare_digest(data.password, WEB_PASSWORD)
+
+    if not username_ok or not password_ok:
+        raise HTTPException(401, "Invalid username or password")
+
+    if not API_TOKEN:
+        raise HTTPException(500, "API_TOKEN is not configured on Telegram API server")
+
+    return {
+        "ok": True,
+        "token": API_TOKEN,
+    }
+
+
+async def require_web_token(authorization: str | None = Header(default=None)):
+    return await require_api_token(authorization)
+
+
+# ============================================================
+# TELEGRAM WEB COMPATIBILITY API
+# Matches the current Telegram Web HTML without Telegram login UI.
+# ============================================================
+
+@web_router.get("/tg/status", dependencies=[Depends(require_web_token)])
+async def web_tg_status():
+    connected, authorized, user = await account_state()
+    return {
+        "ok": True,
+        "connected": connected,
+        "authorized": authorized,
+        "user": user,
+    }
+
+
+@web_router.get("/tg/auth/status", dependencies=[Depends(require_web_token)])
+async def web_tg_auth_status():
+    connected, authorized, user = await account_state()
+    return {
+        "ok": True,
+        "connected": connected,
+        "authorized": authorized,
+        "user": user,
+    }
+
+
+@web_router.post("/tg/start", dependencies=[Depends(require_web_token)])
+async def web_tg_start():
+    connected, authorized, user = await account_state()
+    return {
+        "ok": connected,
+        "connected": connected,
+        "authorized": authorized,
+        "user": user,
+        "error": None if connected else "telegram_connection_failed",
+    }
+
+
+@web_router.get("/me", dependencies=[Depends(require_web_token)])
+async def web_me():
+    _, authorized, user = await account_state()
+    if not authorized or not user:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return user
+
+
+@web_router.get("/dialogs", dependencies=[Depends(require_web_token)])
+async def web_dialogs(limit: int = 100):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.get_dialogs(limit)
+
+
+@web_router.get("/messages", dependencies=[Depends(require_web_token)])
+async def web_messages(peer: str, limit: int = 50, offset_id: int = 0):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.get_messages(peer, limit)
+
+
+@web_router.post("/send", dependencies=[Depends(require_web_token)])
+async def web_send_message(data: SendMessageRequest):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.send_message(str(data.peer), data.text)
+
+
+# ============================================================
+# ORIGINAL DIRECT API
+# ============================================================
 
 @router.get("/status", dependencies=[Depends(require_api_token)])
 async def status():
