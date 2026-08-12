@@ -1,382 +1,230 @@
-from fastapi import APIRouter, HTTPException
+import os
+import tempfile
+from pathlib import Path
+
+from dotenv import load_dotenv
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
 import bot
 
+load_dotenv()
+API_TOKEN = os.getenv("API_TOKEN", "").strip()
 
-router = APIRouter(
-    prefix="",
-    tags=["Telegram"]
-)
-
+router = APIRouter(tags=["Telegram"])
 
 
-# ==========================
-# Models
-# ==========================
+async def require_api_token(authorization: str | None = Header(default=None)):
+    if not API_TOKEN:
+        raise HTTPException(500, "API_TOKEN is not configured on Telegram API server")
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or token.strip() != API_TOKEN:
+        raise HTTPException(401, "Invalid API token")
+    return True
 
 
 class SendCodeRequest(BaseModel):
-
     phone: str
 
-
-
 class SignInRequest(BaseModel):
-
     code: str
 
-
-
 class PasswordRequest(BaseModel):
-
     password: str
 
-
-
 class SendMessageRequest(BaseModel):
-
-    peer: str
-
+    peer: str | int
     text: str
-
-
 
 class EditMessageRequest(BaseModel):
-
-    peer: str
-
+    peer: str | int
     message_id: int
-
     text: str
 
-
-
 class DeleteMessageRequest(BaseModel):
-
-    peer: str
-
+    peer: str | int
     message_id: int
-
-
-
-class MessagesRequest(BaseModel):
-
-    peer: str
-
-    limit: int = 20
-
-
-
-class UploadRequest(BaseModel):
-
-    peer: str
-
-    file_path: str
-
-    caption: str | None = None
-
-
 
 class DownloadRequest(BaseModel):
-
-    peer: str
-
+    peer: str | int
     message_id: int
-
     folder: str = "downloads"
 
-
-
-
-
-# ==========================
-# Authorization
-# ==========================
-
-
-@router.post(
-    "/auth/send_code"
-)
-async def auth_send_code(
-        data: SendCodeRequest
-):
-
-    return await bot.send_code(
-        data.phone
-    )
-
-
-
-@router.post(
-    "/auth/sign_in"
-)
-async def auth_sign_in(
-        data: SignInRequest
-):
-
-    return await bot.sign_in(
-        data.code
-    )
-
-
-
-@router.post(
-    "/auth/password"
-)
-async def auth_password(
-        data: PasswordRequest
-):
-
-    return await bot.password(
-        data.password
-    )
-
-
-
-@router.get(
-    "/auth/status"
-)
-async def auth_status():
-
-    return {
-
-        "authorized":
-            await bot.is_authorized()
-
-    }
-
-
-
-# ==========================
-# Account
-# ==========================
-
-
-@router.get(
-    "/me"
-)
-async def me():
-
-    return await bot.get_me()
-
-
-
-# ==========================
-# Dialogs
-# ==========================
-
-
-@router.get(
-    "/dialogs"
-)
-async def dialogs(
-        limit: int = 50
-):
-
-    return await bot.get_dialogs(
-        limit
-    )
-# ==========================
-# Messages
-# ==========================
-
-
-@router.get(
-    "/messages"
-)
-async def messages(
-        peer: str,
-        limit: int = 20
-):
-
-    return await bot.get_messages(
-        peer,
-        limit
-    )
-
-
-
-# ==========================
-# Send message
-# ==========================
-
-
-@router.post(
-    "/send"
-)
-async def send_message(
-        data: SendMessageRequest
-):
-
-    return await bot.send_message(
-        data.peer,
-        data.text
-    )
-
-
-
-# ==========================
-# Edit message
-# ==========================
-
-
-@router.post(
-    "/edit"
-)
-async def edit_message(
-        data: EditMessageRequest
-):
-
-    return await bot.edit_message(
-        data.peer,
-        data.message_id,
-        data.text
-    )
-
-
-
-# ==========================
-# Delete message
-# ==========================
-
-
-@router.post(
-    "/delete"
-)
-async def delete_message(
-        data: DeleteMessageRequest
-):
-
-    return await bot.delete_message(
-        data.peer,
-        data.message_id
-    )
-
-
-
-# ==========================
-# Upload file
-# ==========================
-
-
-@router.post(
-    "/upload"
-)
-async def upload(
-        data: UploadRequest
-):
-
-    return await bot.send_file(
-        data.peer,
-        data.file_path,
-        data.caption
-    )
-
-
-
-# ==========================
-# Download media
-# ==========================
-
-
-@router.post(
-    "/download"
-)
-async def download(
-        data: DownloadRequest
-):
-
-    return await bot.download_media(
-        data.peer,
-        data.message_id,
-        data.folder
-    )
-
-
-
-# ==========================
-# Forward
-# ==========================
-
-
 class ForwardRequest(BaseModel):
-
-    from_peer: str
-
+    from_peer: str | int
     message_id: int
-
-    to_peer: str
-
-
-
-
-@router.post(
-    "/forward"
-)
-async def forward(
-        data: ForwardRequest
-):
-
-    return await bot.forward_message(
-        data.from_peer,
-        data.message_id,
-        data.to_peer
-    )
-
-
-
-# ==========================
-# Search
-# ==========================
-
-
-@router.get(
-    "/search"
-)
-async def search(
-        query: str,
-        limit: int = 20
-):
-
-    return await bot.search_dialogs(
-        query,
-        limit
-    )
-
-
-
-# ==========================
-# Channels
-# ==========================
-
+    to_peer: str | int
 
 class ChannelRequest(BaseModel):
-
     username: str
 
 
+async def account_state():
+    connected = await bot.connect()
+    authorized = False
+    user = None
+    if connected:
+        authorized = await bot.is_authorized()
+        if authorized:
+            user = await bot.get_me()
+    return connected, authorized, user
 
-@router.post(
-    "/join"
-)
-async def join(
-        data: ChannelRequest
+
+@router.get("/status", dependencies=[Depends(require_api_token)])
+async def status():
+    connected, authorized, user = await account_state()
+    return {"ok": True, "connected": connected, "authorized": authorized, "user": user}
+
+
+@router.post("/start", dependencies=[Depends(require_api_token)])
+async def start():
+    connected, authorized, user = await account_state()
+    return {
+        "ok": connected,
+        "connected": connected,
+        "authorized": authorized,
+        "user": user,
+        "error": None if connected else "telegram_connection_failed",
+    }
+
+
+@router.post("/logout", dependencies=[Depends(require_api_token)])
+async def logout():
+    await bot.disconnect()
+    return {"ok": True}
+
+
+@router.get("/auth/status", dependencies=[Depends(require_api_token)])
+async def auth_status():
+    _, authorized, user = await account_state()
+    return {"ok": True, "authorized": authorized, "user": user}
+
+
+@router.post("/auth/send_code", dependencies=[Depends(require_api_token)])
+@router.post("/send_code", dependencies=[Depends(require_api_token)])
+async def auth_send_code(data: SendCodeRequest):
+    return await bot.send_code(data.phone)
+
+
+@router.post("/auth/sign_in", dependencies=[Depends(require_api_token)])
+@router.post("/sign_in", dependencies=[Depends(require_api_token)])
+async def auth_sign_in(data: SignInRequest):
+    return await bot.sign_in(data.code)
+
+
+@router.post("/auth/password", dependencies=[Depends(require_api_token)])
+async def auth_password(data: PasswordRequest):
+    return await bot.password(data.password)
+
+
+@router.get("/me", dependencies=[Depends(require_api_token)])
+async def me():
+    _, authorized, user = await account_state()
+    if not authorized or not user:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return user
+
+
+@router.get("/dialogs", dependencies=[Depends(require_api_token)])
+async def dialogs(limit: int = 100):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.get_dialogs(limit)
+
+
+@router.get("/messages", dependencies=[Depends(require_api_token)])
+async def messages(peer: str, limit: int = 50, offset_id: int = 0):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.get_messages(peer, limit)
+
+
+@router.get("/messages/{dialog_id}", dependencies=[Depends(require_api_token)])
+async def messages_by_dialog(dialog_id: int, limit: int = 50, offset_id: int = 0):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.get_messages(str(dialog_id), limit)
+
+
+@router.post("/send", dependencies=[Depends(require_api_token)])
+async def send_message(data: SendMessageRequest):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.send_message(str(data.peer), data.text)
+
+
+@router.post("/edit", dependencies=[Depends(require_api_token)])
+async def edit_message(data: EditMessageRequest):
+    return await bot.edit_message(str(data.peer), data.message_id, data.text)
+
+
+@router.post("/delete", dependencies=[Depends(require_api_token)])
+async def delete_message(data: DeleteMessageRequest):
+    return await bot.delete_message(str(data.peer), data.message_id)
+
+
+@router.post("/send_file", dependencies=[Depends(require_api_token)])
+@router.post("/upload", dependencies=[Depends(require_api_token)])
+async def upload_file(
+    dialog_id: str = Form(...),
+    file: UploadFile = File(...),
+    caption: str | None = Form(default=None),
 ):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
 
-    return await bot.join_channel(
-        data.username
-    )
+    suffix = Path(file.filename or "file").suffix
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            temp_path = tmp.name
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                tmp.write(chunk)
+        return await bot.send_file(str(dialog_id), temp_path, caption)
+    finally:
+        if temp_path:
+            Path(temp_path).unlink(missing_ok=True)
 
 
+@router.get("/download/{dialog_id}/{message_id}", dependencies=[Depends(require_api_token)])
+async def download_media(dialog_id: int, message_id: int):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.download_media(str(dialog_id), message_id, "downloads")
 
-@router.post(
-    "/leave"
-)
-async def leave(
-        data: ChannelRequest
-):
 
-    return await bot.leave_channel(
-        data.username
-    )
+@router.post("/download", dependencies=[Depends(require_api_token)])
+async def download(data: DownloadRequest):
+    _, authorized, _ = await account_state()
+    if not authorized:
+        raise HTTPException(401, "Telegram account is not authorized")
+    return await bot.download_media(str(data.peer), data.message_id, data.folder)
+
+
+@router.post("/forward", dependencies=[Depends(require_api_token)])
+async def forward(data: ForwardRequest):
+    return await bot.forward_message(str(data.from_peer), data.message_id, str(data.to_peer))
+
+
+@router.get("/search", dependencies=[Depends(require_api_token)])
+async def search(query: str, limit: int = 20):
+    return await bot.search_dialogs(query, limit)
+
+
+@router.post("/join", dependencies=[Depends(require_api_token)])
+async def join(data: ChannelRequest):
+    return await bot.join_channel(data.username)
+
+
+@router.post("/leave", dependencies=[Depends(require_api_token)])
+async def leave(data: ChannelRequest):
+    return await bot.leave_channel(data.username)
