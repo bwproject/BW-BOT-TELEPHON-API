@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from api import router
+from api import router, web_router
 
 import bot
 
@@ -37,9 +37,7 @@ def check_telegram_network():
     for host, port in TELEGRAM_SERVERS:
         start = time.time()
         try:
-            sock = socket.create_connection(
-                (host, port), timeout=5
-            )
+            sock = socket.create_connection((host, port), timeout=5)
             sock.close()
             delay = round(time.time() - start, 3)
             print(f"OK {host}:{port} ({delay}s)")
@@ -83,8 +81,8 @@ async def lifespan(app_instance):
 app = FastAPI(
     title="Telegram API",
     version="1.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-
 app.include_router(router)
+app.include_router(web_router)
