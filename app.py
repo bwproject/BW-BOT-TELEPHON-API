@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 from api import router, web_router
+from web_media import router as web_media_router
 import bot
 import console_auth
 
@@ -19,7 +20,7 @@ TELEGRAM_SERVERS = [
 ]
 
 BASE_DIR = Path(__file__).resolve().parent
-WEB_HTML = BASE_DIR / "telegramweb.html"
+WEB_HTML = BASE_DIR / "web" / "index.html"
 
 
 def check_telegram_network():
@@ -85,7 +86,7 @@ app = FastAPI(
 @app.get("/telegramweb", include_in_schema=False)
 async def telegram_web():
     if not WEB_HTML.exists():
-        return {"ok": False, "error": "telegramweb.html not found"}
+        return {"ok": False, "error": "web/index.html not found"}
     return FileResponse(WEB_HTML, media_type="text/html; charset=utf-8")
 
 
@@ -96,3 +97,4 @@ async def telegram_web_slash():
 
 app.include_router(router)
 app.include_router(web_router)
+app.include_router(web_media_router)
