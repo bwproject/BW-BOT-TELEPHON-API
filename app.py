@@ -1,3 +1,4 @@
+import asyncio
 import socket
 import time
 
@@ -8,6 +9,7 @@ from fastapi import FastAPI
 from api import router, web_router
 
 import bot
+import console_auth
 
 
 TELEGRAM_SERVERS = [
@@ -72,10 +74,21 @@ async def lifespan(app_instance):
         print("Telegram client not connected")
         print("API will continue running")
 
-    yield
+    # Interactive server-console authorization.
+    # Use /logintg in the same console where uvicorn is running.
+    console_task = asyncio.create_task(console_auth.console_loop())
 
-    print("Stopping Telegram bot...")
-    await bot.stop_bot()
+    try:
+        yield
+    finally:
+        console_task.cancel()
+        try:
+            await console_task
+        except asyncio.CancelledError:
+            pass
+
+        print("Stopping Telegram bot...")
+        await bot.stop_bot()
 
 
 app = FastAPI(
