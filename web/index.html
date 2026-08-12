@@ -5,36 +5,207 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Telegram Web</title>
 <style>
-:root{--bg:#0b1020;--panel:#11182b;--panel2:#17213a;--line:#26314d;--text:#eef3ff;--muted:#8f9bb5;--accent:#4f8cff;--accent2:#2d6ee8;--danger:#ef5b6b;--bubble:#18233b;--shadow:0 20px 60px #0007}*{box-sizing:border-box}html,body{margin:0;height:100%;background:radial-gradient(circle at 20% 0,#18264a 0,#0b1020 45%);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}.login{height:100%;display:grid;place-items:center;padding:20px}.card{width:min(420px,100%);background:#11182bee;border:1px solid #ffffff12;border-radius:24px;padding:30px;box-shadow:var(--shadow);backdrop-filter:blur(18px)}.brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}.brand-icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#5aa0ff,#6c5ce7);font-size:24px}.brand h1{font-size:21px;margin:0}.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}.field{margin:14px 0}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.field input{width:100%;background:#0b1121;border:1px solid var(--line);color:var(--text);border-radius:13px;padding:13px 14px;outline:0}.field input:focus{border-color:var(--accent)}.btn{border:0;border-radius:13px;padding:12px 16px;color:#fff;background:var(--accent);font-weight:700}.btn:hover{filter:brightness(1.08)}.btn.full{width:100%;margin-top:8px}.status{min-height:20px;text-align:center;color:var(--muted);font-size:13px;margin-top:12px}.status.error{color:var(--danger)}
-#app{height:100%;display:grid;grid-template-columns:330px 1fr;overflow:hidden}.sidebar{background:#0e1629e8;border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}.side-head{padding:18px;border-bottom:1px solid var(--line)}.profile{display:flex;align-items:center;gap:12px}.avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#4f8cff,#7b61ff);display:grid;place-items:center;font-weight:800;overflow:hidden;flex:none}.avatar img{width:100%;height:100%;object-fit:cover}.profile-name{font-weight:800}.profile-status{font-size:12px;color:#5ee69b;margin-top:3px}.side-tools{padding:12px;border-bottom:1px solid var(--line)}.search{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:#0a1120;color:var(--text);outline:0}.dialogs{flex:1;overflow:auto;padding:6px}.dialog{display:flex;align-items:center;gap:11px;padding:10px;border-radius:14px;margin:2px 0}.dialog:hover{background:#ffffff08}.dialog.active{background:#1b2c4d}.dialog .avatar{width:42px;height:42px;font-size:14px}.dialog-main{min-width:0;flex:1}.dialog-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dialog-sub{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{background:var(--accent);border-radius:20px;padding:3px 7px;font-size:10px;font-weight:800}.side-foot{padding:12px;border-top:1px solid var(--line)}.btn.outline{background:transparent;border:1px solid var(--line);width:100%}
-.main{min-width:0;display:flex;flex-direction:column;background:linear-gradient(180deg,#0f172a,#0b1020)}.chat-head{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 20px}.chat-head .avatar{width:42px;height:42px}.chat-name{font-weight:800}.chat-meta{font-size:12px;color:var(--muted);margin-top:3px}.messages{flex:1;overflow:auto;padding:22px clamp(14px,5vw,70px);display:flex;flex-direction:column;gap:9px}.empty{margin:auto;text-align:center;color:var(--muted)}.bubble{max-width:min(720px,78%);padding:9px 12px;border-radius:16px;background:var(--bubble);align-self:flex-start;border:1px solid #ffffff06}.bubble.out{align-self:flex-end;background:linear-gradient(135deg,#2867d6,#3b7bea);border:0}.bubble-text{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.45}.time{font-size:10px;color:#aebbd6;margin-top:5px;text-align:right}.out .time{color:#d6e4ff}.media{margin-top:7px;border-radius:12px;overflow:hidden}.media img,.media video{display:block;max-width:100%;max-height:420px}.media-file{display:flex;align-items:center;gap:10px;padding:10px;background:#0003;color:#fff;text-decoration:none}.composer{border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:9px;align-items:flex-end;background:#0c1425e8}.composer textarea{flex:1;resize:none;min-height:44px;max-height:140px;border-radius:14px;border:1px solid var(--line);background:#0a1120;color:var(--text);padding:12px;outline:0}.attach{width:44px;height:44px;border:1px solid var(--line);background:#121b30;color:#cbd6ef;border-radius:13px;font-size:20px}.send{height:44px}.file-preview{padding:7px 18px 0;color:var(--muted);font-size:12px}.loading{opacity:.55}
+:root{--bg:#0b1020;--panel:#11182b;--panel2:#17213a;--line:#26314d;--text:#eef3ff;--muted:#8f9bb5;--accent:#4f8cff;--danger:#ef5b6b;--bubble:#18233b;--shadow:0 20px 60px #0007}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:radial-gradient(circle at 20% 0,#18264a 0,#0b1020 45%);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.login{height:100%;display:grid;place-items:center;padding:20px}.card{width:min(420px,100%);background:#11182bee;border:1px solid #ffffff12;border-radius:24px;padding:30px;box-shadow:var(--shadow);backdrop-filter:blur(18px)}.brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}.brand-icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#5aa0ff,#6c5ce7);font-size:24px}.brand h1{font-size:21px;margin:0}.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}.field{margin:14px 0}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.field input{width:100%;background:#0b1121;border:1px solid var(--line);color:var(--text);border-radius:13px;padding:13px 14px;outline:0}.field input:focus{border-color:var(--accent)}.btn{border:0;border-radius:13px;padding:12px 16px;color:#fff;background:var(--accent);font-weight:700}.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:not-allowed}.btn.full{width:100%;margin-top:8px}.status{min-height:20px;text-align:center;color:var(--muted);font-size:13px;margin-top:12px}.status.error{color:var(--danger)}
+#app{height:100%;display:grid;grid-template-columns:330px minmax(0,1fr);overflow:hidden}.sidebar{background:#0e1629e8;border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.side-head{padding:18px;border-bottom:1px solid var(--line);flex:none}.profile{display:flex;align-items:center;gap:12px;min-width:0}.avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#4f8cff,#7b61ff);display:grid;place-items:center;font-weight:800;overflow:hidden;flex:none}.avatar img{width:100%;height:100%;object-fit:cover}.profile-name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile-status{font-size:12px;color:#5ee69b;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.side-tools{padding:12px;border-bottom:1px solid var(--line);flex:none}.search{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:#0a1120;color:var(--text);outline:0}.dialogs{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:6px;overscroll-behavior:contain}.dialog{display:flex;align-items:center;gap:11px;padding:10px;border-radius:14px;margin:2px 0;cursor:pointer;min-width:0}.dialog:hover{background:#ffffff08}.dialog.active{background:#1b2c4d}.dialog .avatar{width:42px;height:42px;font-size:14px}.dialog-main{min-width:0;flex:1}.dialog-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dialog-sub{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{background:var(--accent);border-radius:20px;padding:3px 7px;font-size:10px;font-weight:800;flex:none}.side-foot{padding:12px;border-top:1px solid var(--line);flex:none}.btn.outline{background:transparent;border:1px solid var(--line);width:100%}
+.main{min-width:0;min-height:0;display:flex;flex-direction:column;background:linear-gradient(180deg,#0f172a,#0b1020);overflow:hidden}.chat-head{height:72px;min-height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 20px}.chat-head .avatar{width:42px;height:42px}.chat-name{font-weight:800}.chat-meta{font-size:12px;color:var(--muted);margin-top:3px}.messages{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:22px clamp(14px,5vw,70px);display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}.empty{margin:auto;text-align:center;color:var(--muted)}.error-box{margin:auto;max-width:520px;text-align:center;color:var(--danger);padding:24px}.bubble{max-width:min(720px,78%);padding:9px 12px;border-radius:16px;background:var(--bubble);align-self:flex-start;border:1px solid #ffffff06}.bubble.out{align-self:flex-end;background:linear-gradient(135deg,#2867d6,#3b7bea);border:0}.bubble-text{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.45}.time{font-size:10px;color:#aebbd6;margin-top:5px;text-align:right}.out .time{color:#d6e4ff}.media{margin-top:7px;border-radius:12px;overflow:hidden}.media img,.media video{display:block;max-width:100%;max-height:420px}.media-file{display:flex;align-items:center;gap:10px;padding:10px;background:#0003;color:#fff;text-decoration:none}.composer{border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:9px;align-items:flex-end;background:#0c1425e8;flex:none}.composer textarea{flex:1;resize:none;min-height:44px;max-height:140px;border-radius:14px;border:1px solid var(--line);background:#0a1120;color:var(--text);padding:12px;outline:0}.attach{width:44px;height:44px;border:1px solid var(--line);background:#121b30;color:#cbd6ef;border-radius:13px;font-size:20px}.send{height:44px}.file-preview{padding:7px 18px 0;color:var(--muted);font-size:12px}.loading{opacity:.55}
 @media(max-width:760px){#app{grid-template-columns:1fr}.sidebar{display:flex}.main{display:none}#app.chat-open .sidebar{display:none}#app.chat-open .main{display:flex}.messages{padding:15px}.bubble{max-width:88%}.chat-head{padding:0 12px}}
 </style>
 </head>
 <body>
 <div id="login" class="login"><div class="card"><div class="brand"><div class="brand-icon">✈</div><div><h1>Telegram Web</h1><p>Безопасный доступ к вашему API-аккаунту</p></div></div><div class="field"><label>Логин</label><input id="user" autocomplete="username"></div><div class="field"><label>Пароль</label><input id="pass" type="password" autocomplete="current-password"></div><button class="btn full" onclick="login()">Войти</button><div id="loginStatus" class="status"></div></div></div>
-<div id="app" class="hidden"><aside class="sidebar"><div class="side-head"><div class="profile"><div id="meAvatar" class="avatar">?</div><div><div id="meName" class="profile-name">Проверка аккаунта…</div><div id="meStatus" class="profile-status">Подключение</div></div></div></div><div class="side-tools"><input id="search" class="search" placeholder="Поиск чатов…" oninput="filterDialogs()"></div><div id="dialogs" class="dialogs"></div><div class="side-foot"><button class="btn outline" onclick="logout()">Выйти</button></div></aside><main class="main"><header class="chat-head"><div id="chatAvatar" class="avatar">?</div><div><div id="chatName" class="chat-name">Выберите чат</div><div id="chatMeta" class="chat-meta">Ваши Telegram диалоги</div></div></header><section id="messages" class="messages"><div class="empty">Выберите диалог слева</div></section><div id="filePreview" class="file-preview hidden"></div><footer class="composer"><input id="file" type="file" hidden onchange="fileSelected()"><button class="attach" onclick="document.getElementById('file').click()" title="Вложение">＋</button><textarea id="text" rows="1" placeholder="Сообщение…" onkeydown="key(event)"></textarea><button id="send" class="btn send" onclick="send()">➤</button></footer></main></div>
+<div id="app" class="hidden">
+<aside class="sidebar">
+<div class="side-head"><div class="profile"><div id="meAvatar" class="avatar">?</div><div style="min-width:0"><div id="meName" class="profile-name">Проверка аккаунта…</div><div id="meStatus" class="profile-status">Подключение</div></div></div></div>
+<div class="side-tools"><input id="search" class="search" placeholder="Поиск чатов…" oninput="filterDialogs()"></div>
+<div id="dialogs" class="dialogs"></div>
+<div class="side-foot"><button class="btn outline" onclick="logout()">Выйти</button></div>
+</aside>
+<main class="main">
+<header class="chat-head"><div id="chatAvatar" class="avatar">?</div><div style="min-width:0"><div id="chatName" class="chat-name">Выберите чат</div><div id="chatMeta" class="chat-meta">Ваши Telegram диалоги</div></div></header>
+<section id="messages" class="messages"><div class="empty">Выберите диалог слева</div></section>
+<div id="filePreview" class="file-preview hidden"></div>
+<footer class="composer"><input id="file" type="file" hidden onchange="fileSelected()"><button class="attach" onclick="document.getElementById('file').click()" title="Вложение">＋</button><textarea id="text" rows="1" placeholder="Сообщение…" onkeydown="key(event)"></textarea><button id="send" class="btn send" onclick="send()">➤</button></footer>
+</main>
+</div>
 <script>
-let TOKEN=localStorage.getItem('tw_token')||'';let dialogs=[];let peer=null;let currentName='';let poll=null;let selectedFile=null;const base=location.origin;
-async function api(path,opt={}){const h={...(opt.headers||{})};if(!(opt.body instanceof FormData))h['Content-Type']='application/json';if(TOKEN)h.Authorization='Bearer '+TOKEN;const r=await fetch(base+'/api/telegramweb'+path,{...opt,headers:h});if(r.status===401){logout();throw Error('Сессия недействительна')}if(!r.ok){let x='HTTP '+r.status;try{const j=await r.json();x=j.detail||x}catch{}throw Error(x)}return r.headers.get('content-type')?.includes('json')?r.json():r}
+let TOKEN=localStorage.getItem('tw_token')||'';
+let dialogs=[];
+let peer=null;
+let poll=null;
+let selectedFile=null;
+const base=location.origin;
+
+async function api(path,opt={}){
+    const h={...(opt.headers||{})};
+    if(!(opt.body instanceof FormData))h['Content-Type']='application/json';
+    if(TOKEN)h.Authorization='Bearer '+TOKEN;
+    const r=await fetch(base+'/api/telegramweb'+path,{...opt,headers:h});
+    if(r.status===401){logout();throw Error('Сессия недействительна');}
+    if(!r.ok){let x='HTTP '+r.status;try{const j=await r.json();x=j.detail||j.error||x}catch{}throw Error(x)}
+    const type=r.headers.get('content-type')||'';
+    return type.includes('json')?await r.json():r;
+}
+
 function setStatus(t,e=false){const x=document.getElementById('loginStatus');x.textContent=t;x.className='status'+(e?' error':'')}
-async function login(){const username=document.getElementById('user').value.trim(),password=document.getElementById('pass').value;if(!username||!password)return setStatus('Введите логин и пароль',true);setStatus('Вход…');try{const r=await fetch(base+'/api/telegramweb/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});const d=await r.json();if(!r.ok)throw Error(d.detail||'Ошибка авторизации');TOKEN=d.token;localStorage.setItem('tw_token',TOKEN);await start()}catch(e){setStatus(e.message,true)}}
-async function start(){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');try{const s=await api('/tg/status');if(!s.authorized)throw Error('Telegram аккаунт не авторизован на API');setMe(s.user);await loadDialogs()}catch(e){document.getElementById('meStatus').textContent=e.message;document.getElementById('meStatus').style.color='var(--danger)'}}
-function setMe(u){if(!u)return;document.getElementById('meName').textContent=((u.first_name||'')+' '+(u.last_name||'')).trim()||u.username||'Telegram';document.getElementById('meStatus').textContent=u.username?'@'+u.username+' • авторизован':'Telegram • авторизован';setAvatar('meAvatar','me')}
-async function setAvatar(id,p){const el=document.getElementById(id);if(!el)return;try{const r=await api('/avatar/'+encodeURIComponent(p));const b=await r.blob();const url=URL.createObjectURL(b);el.innerHTML='<img src="'+url+'">'}catch{}}
-async function loadDialogs(){dialogs=await api('/dialogs?limit=100');renderDialogs()}
-function renderDialogs(){const q=document.getElementById('search').value.toLowerCase();const box=document.getElementById('dialogs');box.innerHTML='';dialogs.filter(d=>(d.name||'').toLowerCase().includes(q)||(d.username||'').toLowerCase().includes(q)).forEach(d=>{const el=document.createElement('div');el.className='dialog'+(String(d.id)===String(peer)?' active':'');el.innerHTML='<div id="av-'+d.id+'" class="avatar">'+esc((d.name||'?')[0].toUpperCase())+'</div><div class="dialog-main"><div class="dialog-name">'+esc(d.name||d.username||d.id)+'</div><div class="dialog-sub">'+esc(d.username?'@'+d.username:d.type||'Telegram')+'</div></div>'+(d.unread?'<span class="badge">'+d.unread+'</span>':'');el.onclick=()=>openChat(d);box.appendChild(el);setAvatar('av-'+d.id,String(d.id))})}
+
+async function login(){
+    const username=document.getElementById('user').value.trim();
+    const password=document.getElementById('pass').value;
+    if(!username||!password)return setStatus('Введите логин и пароль',true);
+    setStatus('Вход…');
+    try{
+        const r=await fetch(base+'/api/telegramweb/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+        const d=await r.json();
+        if(!r.ok)throw Error(d.detail||'Ошибка авторизации');
+        TOKEN=d.token;localStorage.setItem('tw_token',TOKEN);await start();
+    }catch(e){setStatus(e.message,true)}
+}
+
+async function start(){
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('meStatus').textContent='Проверка Telegram аккаунта…';
+    try{
+        const s=await api('/tg/status');
+        if(!s.authorized)throw Error('Telegram аккаунт не авторизован на API');
+        setMe(s.user);
+        await loadDialogs();
+    }catch(e){
+        document.getElementById('meStatus').textContent=e.message;
+        document.getElementById('meStatus').style.color='var(--danger)';
+    }
+}
+
+function setMe(u){
+    if(!u)return;
+    document.getElementById('meName').textContent=((u.first_name||'')+' '+(u.last_name||'')).trim()||u.username||'Telegram';
+    document.getElementById('meStatus').textContent=u.username?'@'+u.username+' • авторизован':'Telegram • авторизован';
+    setAvatar('meAvatar','me');
+}
+
+async function setAvatar(id,p){
+    const el=document.getElementById(id);if(!el)return;
+    try{
+        const r=await api('/avatar/'+encodeURIComponent(p));
+        const b=await r.blob();
+        const url=URL.createObjectURL(b);
+        el.innerHTML='<img src="'+url+'" alt="">';
+    }catch{}
+}
+
+async function loadDialogs(){
+    const box=document.getElementById('dialogs');
+    box.innerHTML='<div class="empty" style="padding:25px">Загрузка диалогов…</div>';
+    try{
+        dialogs=await api('/dialogs?limit=100');
+        if(!Array.isArray(dialogs))throw Error('API вернул неверный список диалогов');
+        renderDialogs();
+    }catch(e){
+        box.innerHTML='<div class="error-box">Не удалось загрузить диалоги<br><small>'+esc(e.message)+'</small><br><button class="btn" style="margin-top:14px" onclick="loadDialogs()">Повторить</button></div>';
+        console.error('dialogs error',e);
+    }
+}
+
+function renderDialogs(){
+    const q=document.getElementById('search').value.trim().toLowerCase();
+    const box=document.getElementById('dialogs');box.innerHTML='';
+    const filtered=dialogs.filter(d=>(d.name||'').toLowerCase().includes(q)||(d.username||'').toLowerCase().includes(q));
+    if(!filtered.length){box.innerHTML='<div class="empty" style="padding:25px">Нет диалогов</div>';return;}
+    filtered.forEach(d=>{
+        const el=document.createElement('div');
+        el.className='dialog'+(String(d.id)===String(peer)?' active':'');
+        const avId='av-'+String(d.id).replace(/[^a-zA-Z0-9_-]/g,'_');
+        el.innerHTML='<div id="'+avId+'" class="avatar">'+esc((d.name||'?')[0].toUpperCase())+'</div><div class="dialog-main"><div class="dialog-name">'+esc(d.name||d.username||d.id)+'</div><div class="dialog-sub">'+esc(d.username?'@'+d.username:d.type||'Telegram')+'</div></div>'+(d.unread?'<span class="badge">'+d.unread+'</span>':'');
+        el.onclick=()=>openChat(d);
+        box.appendChild(el);
+        setAvatar(avId,String(d.id));
+    });
+}
+
 function filterDialogs(){renderDialogs()}
-async function openChat(d){peer=d.username||String(d.id);currentName=d.name||d.username||String(d.id);document.getElementById('app').classList.add('chat-open');document.getElementById('chatName').textContent=currentName;document.getElementById('chatMeta').textContent=d.username?'@'+d.username:d.type||'Telegram';setAvatar('chatAvatar',String(d.id));renderDialogs();await loadMessages() ;if(poll)clearInterval(poll);poll=setInterval(loadMessages,4000)}
-async function loadMessages(){if(!peer)return;try{const ms=await api('/media-messages?peer='+encodeURIComponent(peer)+'&limit=80');const box=document.getElementById('messages');box.innerHTML='';if(!ms.length){box.innerHTML='<div class="empty">Нет сообщений</div>';return}for(const m of ms.slice().reverse())await renderMessage(box,m);box.scrollTop=box.scrollHeight}catch(e){console.error(e)}}
-async function renderMessage(box,m){const el=document.createElement('div');el.className='bubble '+(m.out?'out':'');let h='';if(m.media){const u='/media/'+encodeURIComponent(peer)+'/'+m.id;if(m.media.type==='photo'||m.media.type==='video'){h+='<div class="media" id="media-'+m.id+'">Загрузка вложения…</div>'}else{h+='<div class="media"><a class="media-file" href="#" onclick="downloadMedia('+m.id+');return false">📎 '+esc(m.media.file_name||m.media.type)+'</a></div>'}}if(m.text)h+='<div class="bubble-text">'+esc(m.text)+'</div>';const tm=m.date?new Date(m.date).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'';h+='<div class="time">'+tm+'</div>';el.innerHTML=h;box.appendChild(el);if(m.media&&(m.media.type==='photo'||m.media.type==='video'))loadInlineMedia(m.id,m.media.type)}
-async function loadInlineMedia(id,type){const host=document.getElementById('media-'+id);if(!host)return;try{const r=await api('/media/'+encodeURIComponent(peer)+'/'+id);const b=await r.blob();const u=URL.createObjectURL(b);host.innerHTML=type==='video'?'<video controls src="'+u+'"></video>':'<img src="'+u+'">'}catch{host.textContent='Не удалось загрузить вложение'}}
-async function downloadMedia(id){try{const r=await api('/media/'+encodeURIComponent(peer)+'/'+id);const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='telegram-media-'+id;a.click()}catch(e){alert(e.message)}}
-function fileSelected(){selectedFile=document.getElementById('file').files[0]||null;const p=document.getElementById('filePreview');if(selectedFile){p.textContent='📎 '+selectedFile.name;p.classList.remove('hidden')}else p.classList.add('hidden')}
-async function send(){if(!peer)return;const text=document.getElementById('text').value.trim();if(!text&&!selectedFile)return;try{document.getElementById('send').disabled=true;if(selectedFile){const f=new FormData();f.append('dialog_id',peer);f.append('file',selectedFile);if(text)f.append('caption',text);await api('/send_file',{method:'POST',body:f})}else await api('/send',{method:'POST',body:JSON.stringify({peer,text})});document.getElementById('text').value='';document.getElementById('file').value='';selectedFile=null;document.getElementById('filePreview').classList.add('hidden');await loadMessages()}catch(e){alert('Ошибка отправки: '+e.message)}finally{document.getElementById('send').disabled=false;document.getElementById('text').focus()}}
+
+async function openChat(d){
+    peer=d.username||String(d.id);
+    document.getElementById('app').classList.add('chat-open');
+    document.getElementById('chatName').textContent=d.name||d.username||d.id;
+    document.getElementById('chatMeta').textContent=d.username?'@'+d.username:d.type||'Telegram';
+    setAvatar('chatAvatar',String(d.id));
+    renderDialogs();
+    if(poll)clearInterval(poll);
+    document.getElementById('messages').innerHTML='<div class="empty">Загрузка сообщений…</div>';
+    await loadMessages();
+    poll=setInterval(loadMessages,4000);
+}
+
+async function loadMessages(){
+    if(!peer)return;
+    try{
+        const ms=await api('/media-messages?peer='+encodeURIComponent(peer)+'&limit=80');
+        const box=document.getElementById('messages');
+        if(!Array.isArray(ms))throw Error('API вернул неверный формат сообщений');
+        box.innerHTML='';
+        if(!ms.length){box.innerHTML='<div class="empty">Нет сообщений</div>';return;}
+        for(const m of ms.slice().reverse())await renderMessage(box,m);
+        box.scrollTop=box.scrollHeight;
+    }catch(e){
+        document.getElementById('messages').innerHTML='<div class="error-box">Не удалось загрузить диалог<br><small>'+esc(e.message)+'</small><br><button class="btn" style="margin-top:14px" onclick="loadMessages()">Повторить</button></div>';
+        console.error('messages error',e);
+    }
+}
+
+async function renderMessage(box,m){
+    const el=document.createElement('div');
+    el.className='bubble '+(m.out?'out':'');
+    let h='';
+    if(m.media){
+        if(m.media.type==='photo'||m.media.type==='video')h+='<div class="media" id="media-'+m.id+'">Загрузка вложения…</div>';
+        else h+='<div class="media"><a class="media-file" href="#" onclick="downloadMedia('+m.id+');return false">📎 '+esc(m.media.file_name||m.media.type)+'</a></div>';
+    }
+    if(m.text)h+='<div class="bubble-text">'+esc(m.text)+'</div>';
+    const tm=m.date?new Date(m.date).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'';
+    h+='<div class="time">'+tm+'</div>';
+    el.innerHTML=h;box.appendChild(el);
+    if(m.media&&(m.media.type==='photo'||m.media.type==='video'))loadInlineMedia(m.id,m.media.type);
+}
+
+async function loadInlineMedia(id,type){
+    const host=document.getElementById('media-'+id);if(!host)return;
+    try{const r=await api('/media/'+encodeURIComponent(peer)+'/'+id);const b=await r.blob();const u=URL.createObjectURL(b);host.innerHTML=type==='video'?'<video controls src="'+u+'"></video>':'<img src="'+u+'" alt="">'}catch{host.textContent='Не удалось загрузить вложение'}
+}
+
+async function downloadMedia(id){
+    try{const r=await api('/media/'+encodeURIComponent(peer)+'/'+id);const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='telegram-media-'+id;a.click()}catch(e){alert(e.message)}
+}
+
+function fileSelected(){
+    selectedFile=document.getElementById('file').files[0]||null;
+    const p=document.getElementById('filePreview');
+    if(selectedFile){p.textContent='📎 '+selectedFile.name;p.classList.remove('hidden')}else p.classList.add('hidden');
+}
+
+async function send(){
+    if(!peer)return;
+    const text=document.getElementById('text').value.trim();
+    if(!text&&!selectedFile)return;
+    try{
+        document.getElementById('send').disabled=true;
+        if(selectedFile){
+            const f=new FormData();f.append('dialog_id',peer);f.append('file',selectedFile);if(text)f.append('caption',text);await api('/send_file',{method:'POST',body:f});
+        }else{
+            await api('/send-text',{method:'POST',body:JSON.stringify({peer,text})});
+        }
+        document.getElementById('text').value='';document.getElementById('file').value='';selectedFile=null;document.getElementById('filePreview').classList.add('hidden');await loadMessages();
+    }catch(e){alert('Ошибка отправки: '+e.message)}
+    finally{document.getElementById('send').disabled=false;document.getElementById('text').focus()}
+}
+
 function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function logout(){if(poll)clearInterval(poll);TOKEN='';localStorage.removeItem('tw_token');location.reload()}
-document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});if(TOKEN)start();
+function logout(){if(poll)clearInterval(poll);TOKEN='';peer=null;localStorage.removeItem('tw_token');location.reload()}
+document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+if(TOKEN)start();
 </script>
-</body></html>
+</body>
+</html>
