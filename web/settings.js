@@ -19,10 +19,14 @@
 
     function escSettings(value){
         if(typeof esc==='function')return esc(value);
-        return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
     }
 
     let settings={download_mode:'open',auto_download:true,excluded_peers:[],ttl_hours:24,auto_cleanup:true};
+
+    function hasAuth(){
+        return !!(typeof TOKEN !== 'undefined' && TOKEN);
+    }
 
     function injectSettings(){
         const foot=document.querySelector('.side-foot');
@@ -76,6 +80,7 @@
     }
 
     async function refreshSettings(){
+        if(!hasAuth()) return;
         try{
             const data=await api('/media-settings');
             settings={...settings,...data};
@@ -86,7 +91,7 @@
             const cleanup=document.getElementById('mediaAutoCleanup');
             const ttl=document.getElementById('mediaTtl');
             if(mode)mode.value=settings.download_mode||'open';
-            if(auto)auto.checked!==undefined&&(auto.checked=!!settings.auto_download);
+            if(auto)auto.checked=!!settings.auto_download;
             if(ex)ex.value=(settings.excluded_peers||[]).join('\n');
             if(cleanup)cleanup.checked=!!settings.auto_cleanup;
             if(ttl)ttl.value=settings.ttl_hours||24;
@@ -99,6 +104,7 @@
     }
 
     async function openSettings(){
+        if(!hasAuth()) return;
         injectSettings();
         document.getElementById('settingsOverlay').classList.add('open');
         await refreshSettings();
@@ -111,6 +117,7 @@
     window.saveMediaSettings=async()=>{
         const status=document.getElementById('mediaSettingsStatus');
         try{
+            if(!hasAuth())throw Error('Сначала войдите в Telegram Web');
             const excluded=document.getElementById('mediaExcluded').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
             const data={
                 download_mode:document.getElementById('mediaDownloadMode').value,
@@ -127,6 +134,7 @@
     };
 
     window.clearMediaCache=async()=>{
+        if(!hasAuth())return;
         if(!confirm('Удалить все скачанные вложения с сервера?'))return;
         const status=document.getElementById('mediaSettingsStatus');
         try{
@@ -136,8 +144,15 @@
         }catch(e){status.textContent=e.message;status.className='status error'}
     };
 
-    // The existing media loader consults this flag through the backend cache.
-    // We keep settings globally available for the current web client.
     injectSettings();
-    setTimeout(refreshSettings,500);
+
+    // Do not call protected API endpoints while the login screen is shown.
+    // The previous unconditional timer caused /media-settings -> 401 -> logout()
+    // -> location.reload(), creating an endless refresh loop before login.
+    if(hasAuth()) setTimeout(refreshSettings,500);
+
+    // index.html dispatches this event immediately after successful login.
+    window.addEventListener('telegram-web-auth-ready',()=>{
+        setTimeout(refreshSettings,100);
+    });
 })();
