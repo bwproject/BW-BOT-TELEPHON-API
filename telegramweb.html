@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telegram Web</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101522;color:#e8edf7;height:100vh}.hidden{display:none!important}.login{width:380px;max-width:92vw;margin:15vh auto;background:#182235;padding:28px;border-radius:16px;box-shadow:0 15px 50px #0008}.login h2{text-align:center;margin:0 0 24px}.field{margin-bottom:14px}.field label{display:block;color:#9aa7bd;font-size:13px;margin-bottom:6px}.field input,.msg{width:100%;border:1px solid #30405d;background:#0d1626;color:#fff;border-radius:10px;padding:12px;outline:0}.field input:focus,.msg:focus{border-color:#4d9cff}.btn{border:0;border-radius:10px;padding:11px 16px;background:#3988ff;color:#fff;font-weight:600;cursor:pointer}.btn:hover{opacity:.88}.btn.danger{background:#d94b55}.status{min-height:20px;margin-top:12px;text-align:center;color:#9aa7bd;font-size:13px}.error{color:#ff6873}.ok{color:#4bd58a}#app{height:100vh;display:flex}.side{width:330px;background:#162136;border-right:1px solid #283651;display:flex;flex-direction:column}.account{padding:18px;border-bottom:1px solid #283651}.account b{display:block}.account small{color:#8e9ab0}.actions{padding:12px 18px;border-bottom:1px solid #283651}.chats{overflow:auto;flex:1}.chat{padding:13px 18px;border-bottom:1px solid #222f47;cursor:pointer}.chat:hover,.chat.active{background:#203150}.chat b{display:block}.chat small{color:#8997ad}.main{flex:1;display:flex;flex-direction:column}.head{height:60px;padding:0 20px;display:flex;align-items:center;border-bottom:1px solid #283651;font-weight:600}.messages{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:8px}.message{max-width:72%;padding:10px 13px;border-radius:13px;background:#27344b;white-space:pre-wrap;word-break:break-word}.message.out{align-self:flex-end;background:#3988ff}.message time{display:block;font-size:10px;opacity:.65;margin-top:5px}.composer{display:flex;gap:8px;padding:12px 18px;border-top:1px solid #283651}.composer .msg{resize:none;min-height:42px;max-height:130px}.empty{margin:auto;color:#7f8da5}@media(max-width:700px){.side{width:100%}.main{display:none}#app.chat-open .side{display:none}#app.chat-open .main{display:flex}.message{max-width:88%}}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+<h2>Telegram Web</h2>
+<div class="field"><label>Логин</label><input id="user" autocomplete="username" value=""></div>
+<div class="field"><label>Пароль</label><input id="pass" type="password" autocomplete="current-password"></div>
+<button class="btn" style="width:100%" onclick="login()">Войти</button>
+<div id="loginStatus" class="status"></div>
+</div>
+<div id="app" class="hidden">
+<aside class="side">
+<div class="account"><b id="name">Проверка аккаунта...</b><small id="accountStatus">Подключение...</small></div>
+<div class="actions"><button class="btn danger" style="width:100%" onclick="logout()">Выйти</button></div>
+<div id="chats" class="chats"></div>
+</aside>
+<main class="main"><div class="head" id="title">Telegram Web</div><div id="messages" class="messages"><div class="empty">Выберите чат</div></div><div class="composer"><textarea id="text" class="msg" placeholder="Напишите сообщение..." onkeydown="key(event)"></textarea><button class="btn" onclick="send()">Отправить</button></div></main>
+</div>
+<script>
+let token=localStorage.getItem('tw_token')||'',peer=null,poll=null;
+const base=location.origin;
+async function api(path,opt={}){let h={'Content-Type':'application/json',...(opt.headers||{})};if(token)h.Authorization='Bearer '+token;let r=await fetch(base+'/api/telegramweb'+path,{...opt,headers:h});if(r.status===401){if(path!=='/auth/login'){logout();throw Error('Сессия истекла')} }let d;try{d=await r.json()}catch{d={}}if(!r.ok)throw Error(d.detail||d.error||('HTTP '+r.status));return d}
+function status(id,t,c=''){let e=document.getElementById(id);e.textContent=t;e.className='status '+c}
+async function login(){let username=document.getElementById('user').value.trim(),password=document.getElementById('pass').value;if(!username||!password)return status('loginStatus','Введите логин и пароль','error');status('loginStatus','Вход...');try{let d=await api('/auth/login',{method:'POST',body:JSON.stringify({username,password})});token=d.token;localStorage.setItem('tw_token',token);showApp();await init()}catch(e){status('loginStatus',e.message,'error')}}
+function showApp(){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden')}
+function showLogin(){document.getElementById('login').classList.remove('hidden');document.getElementById('app').classList.add('hidden')}
+function logout(){if(poll)clearInterval(poll);poll=null;token='';peer=null;localStorage.removeItem('tw_token');showLogin()}
+async function init(){showApp();document.getElementById('accountStatus').textContent='Проверка Telegram аккаунта...';try{let s=await api('/tg/status');if(!s.authorized)throw Error('Telegram аккаунт не авторизован на API');let u=s.user||await api('/me');document.getElementById('name').textContent=((u.first_name||'')+' '+(u.last_name||'')).trim()||u.username||'Telegram';document.getElementById('accountStatus').textContent=u.username?'@'+u.username+' • авторизован':'Telegram API • авторизован';await dialogs()}catch(e){document.getElementById('accountStatus').textContent=e.message;document.getElementById('accountStatus').className='error'}}
+async function dialogs(){let ds=await api('/dialogs?limit=100'),box=document.getElementById('chats');box.innerHTML='';if(!Array.isArray(ds)||!ds.length){box.innerHTML='<div class="empty" style="padding:20px">Нет диалогов</div>';return}ds.forEach(d=>{let x=document.createElement('div');x.className='chat';x.innerHTML='<b>'+esc(d.name||d.username||d.id)+'</b><small>'+(d.username?'@'+esc(d.username):(d.type||''))+(d.unread?' · '+d.unread+' непрочитанных':'')+'</small>';x.onclick=()=>select(d);box.appendChild(x)})}
+function select(d){peer=d.username||String(d.id);document.getElementById('title').textContent=d.name||d.username||d.id;document.getElementById('app').classList.add('chat-open');loadMessages();if(poll)clearInterval(poll);poll=setInterval(loadMessages,3000)}
+async function loadMessages(){if(!peer)return;try{let ms=await api('/messages?peer='+encodeURIComponent(peer)+'&limit=50'),box=document.getElementById('messages');box.innerHTML='';if(!Array.isArray(ms)||!ms.length){box.innerHTML='<div class="empty">Нет сообщений</div>';return}ms.slice().reverse().forEach(m=>{let x=document.createElement('div');x.className='message '+(m.out?'out':'');x.innerHTML=esc(m.text||'')+(m.date?'<time>'+new Date(m.date).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'</time>':'');box.appendChild(x)});box.scrollTop=box.scrollHeight}catch(e){console.error(e)}}
+async function send(){let t=document.getElementById('text'),text=t.value.trim();if(!peer||!text)return;try{await api('/send',{method:'POST',body:JSON.stringify({peer,text})});t.value='';await loadMessages()}catch(e){alert('Ошибка отправки: '+e.message)}}
+function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+document.getElementById('pass').onkeydown=e=>{if(e.key==='Enter')login()};if(token){init().catch(()=>showLogin())}else showLogin();
+</script>
+</body></html>
