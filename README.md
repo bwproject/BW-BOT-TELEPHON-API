@@ -1,64 +1,211 @@
-# BW Telegram Telethon API
+# 🚀 BW Telegram Telethon API
 
-REST API сервис для управления Telegram аккаунтом через MTProto.
+**BW Telegram Telethon API** — FastAPI + Telethon сервис для управления авторизованным Telegram-аккаунтом через MTProto и браузерный интерфейс.
 
-## Технологии
+Проект рассчитан на работу с **одним авторизованным Telegram session-файлом**. После первичной авторизации аккаунт сохраняется в `sessions/`, поэтому при следующих запусках повторный ввод номера и кода не требуется.
 
-- **Python** -- основной язык
-- **Telethon** -- MTProto клиент для Telegram
-- **FastAPI** -- HTTP API сервер
-- **Uvicorn** -- ASGI сервер
+---
 
-## Возможности
+## ✨ Возможности
 
-### Авторизация Telegram
+### 👤 Telegram-аккаунт
 
-- Отправка кода авторизации
-- Вход по коду
-- Поддержка двухфакторной аутентификации (2FA)
-- Сохранение session-файла (повторный запуск без повторного входа)
-- Авторизация через REST API или Telegram команду `/auth`
+- Проверка подключения к Telegram.
+- Проверка фактического статуса авторизации session-файла.
+- Получение информации о текущем аккаунте через `/me`.
+- Авторизация по номеру телефона, коду Telegram и 2FA.
+- Сохранение авторизации в Telethon `.session`.
+- Консольная авторизация через `/logintg` с последовательным вводом номера, кода и пароля 2FA.
 
-### Управление сообщениями
+### 💬 Диалоги
 
-- Получение диалогов и сообщений
-- Отправка, редактирование, удаление сообщений
-- Пересылка сообщений
-- Поиск диалогов
+- Получение списка диалогов.
+- Поиск чатов в браузере.
+- Личные сообщения.
+- Группы.
+- Каналы.
+- Непрочитанные сообщения.
+- Открытие выбранного диалога.
+- Автоматическое обновление сообщений.
 
-### Файлы и медиа
+### 🖼️ Аватарки
 
-- Отправка файлов
-- Скачивание медиа из сообщений
+В веб-интерфейсе отображаются:
 
-### Каналы и группы
+- аватар текущего Telegram-аккаунта;
+- аватарки пользователей;
+- аватарки групп и каналов.
 
-- Вступление в каналы/группы
-- Выход из каналов/групп
+Аватар загружается через API непосредственно из Telegram.
 
-### Прокси
+### 📎 Вложения и медиа
 
-- Поддержка SOCKS4/SOCKS5 прокси
-- Поддержка HTTP прокси
-- Поддержка MTProto прокси
-- Настройка через переменную окружения `PROXY`
+В веб-интерфейсе поддерживаются:
 
-## Структура проекта
+- фотографии;
+- видео;
+- документы и файлы;
+- просмотр изображений прямо в чате;
+- воспроизведение видео;
+- скачивание вложений;
+- отправка файлов из браузера;
+- подпись к отправляемому файлу.
 
+### 📨 Сообщения
+
+- получение истории сообщений;
+- отправка сообщений;
+- отправка файлов;
+- автоматическое обновление открытого чата;
+- отображение времени сообщений;
+- разделение входящих и исходящих сообщений.
+
+### 🌐 Telegram Web
+
+В проект добавлен полноценный браузерный интерфейс.
+
+Открыть его можно напрямую:
+
+```text
+http://SERVER_IP:PORT/telegramweb
 ```
+
+Например, если API работает на порту `1046`:
+
+```text
+http://SERVER_IP:1046/telegramweb
+```
+
+Интерфейс расположен отдельно от Python-кода:
+
+```text
+web/index.html
+```
+
+Это позволяет независимо улучшать дизайн и JavaScript интерфейса, не смешивая HTML с FastAPI-логикой.
+
+---
+
+## 🖥️ Telegram Web
+
+После открытия `/telegramweb` пользователь видит страницу входа.
+
+### 1. Вход в Web UI
+
+Используются значения из `.env`:
+
+```env
+WEB_USERNAME=admin
+WEB_PASSWORD=CHANGE_ME_TO_A_STRONG_PASSWORD
+```
+
+После успешного входа браузер получает серверный `API_TOKEN` и использует его для последующих запросов.
+
+### 2. Проверка Telegram
+
+После Web-входа интерфейс автоматически обращается к:
+
+```text
+GET /api/telegramweb/tg/status
+```
+
+Проверяется:
+
+- доступность Telegram;
+- наличие session;
+- авторизован ли Telegram-аккаунт;
+- информация о текущем пользователе.
+
+Если session не авторизован, интерфейс показывает ошибку вместо ложного сообщения об успешном подключении.
+
+### 3. Работа с чатами
+
+После успешной проверки открывается список диалогов.
+
+Для выбранного чата интерфейс получает историю через:
+
+```text
+GET /api/telegramweb/media-messages?peer=...&limit=80
+```
+
+Вложения загружаются отдельными запросами, поэтому тяжёлые файлы не передаются вместе со списком сообщений.
+
+---
+
+## 🔐 Авторизация Telegram
+
+### Вариант 1 — консольная авторизация
+
+При запущенном сервисе можно использовать команду:
+
+```text
+/logintg
+```
+
+Далее консоль последовательно запрашивает:
+
+```text
+Номер телефона → код из Telegram → пароль 2FA
+```
+
+После успешной авторизации session перезаписывается и сохраняется по пути из `SESSION_NAME`.
+
+Например:
+
+```env
+SESSION_NAME=sessions/MesBw
+```
+
+создаёт файл:
+
+```text
+sessions/MesBw.session
+```
+
+### Вариант 2 — REST API
+
+Доступны endpoints для авторизации:
+
+```text
+POST /auth/send_code
+POST /auth/sign_in
+POST /auth/password
+GET  /auth/status
+```
+
+> Если session уже авторизован, повторная авторизация не требуется.
+
+---
+
+## 📁 Структура проекта
+
+```text
 BW-BOT-TELEPHON-API/
-  main.py              # Точка входа
-  app.py               # FastAPI приложение + lifespan
-  api.py               # HTTP API маршруты
-  bot.py               # Telethon клиент и логика
-  .env.rename          # Пример файла .env
-  requirements.txt     # Зависимости
-  sessions/            # Telegram session файлы (создаётся автоматически)
-  downloads/           # Скачанные файлы (создаётся автоматически)
-  logs/                # Логи (создаётся автоматически)
+│
+├── main.py                 # Точка входа
+├── app.py                  # FastAPI приложение и lifespan
+├── api.py                  # REST API + Telegram Web API
+├── bot.py                  # Telethon клиент и Telegram-логика
+├── console_auth.py         # Консольная авторизация /logintg
+├── web_media.py            # Медиа и аватарки для Web UI
+│
+├── web/
+│   └── index.html          # Современный Telegram Web интерфейс
+│
+├── sessions/               # Telethon session-файлы
+├── downloads/              # Загруженные Telegram-файлы
+├── logs/                   # Логи
+│
+├── .env.rename             # Пример конфигурации
+├── .gitignore
+└── requirements.txt
 ```
 
-## Установка
+⚠️ **Никогда не публикуйте содержимое `sessions/` в GitHub.** Session-файл фактически содержит авторизацию Telegram-аккаунта.
+
+---
+
+## ⚙️ Установка
 
 ### 1. Клонирование
 
@@ -73,173 +220,382 @@ cd BW-BOT-TELEPHON-API
 pip install -r requirements.txt
 ```
 
-### 3. Получение API_ID и API_HASH
+### 3. Создание `.env`
 
-1. Перейдите на [my.telegram.org](https://my.telegram.org)
-2. Войдите через номер телефона
-3. Создайте приложение в разделе **API development tools**
-4. Скопируйте `API_ID` и `API_HASH`
+```bash
+cp .env.rename .env
+```
 
-### 4. Настройка окружения
-
-Скопируйте `.env.rename` в `.env` и заполните:
+Минимальная конфигурация:
 
 ```env
 API_ID=12345678
 API_HASH=your_api_hash_here
+
 PHONE=+70000000000
-PROXY=socks5://127.0.0.1:1080
-SESSION_NAME=sessions/account
+
+PROXY=
+
+SESSION_NAME=sessions/MesBw
+
 HOST=0.0.0.0
-PORT=8000
-API_TOKEN=
+PORT=1046
+
+API_TOKEN=CHANGE_ME_TO_A_LONG_RANDOM_TOKEN
+
+WEB_USERNAME=admin
+WEB_PASSWORD=CHANGE_ME_TO_A_STRONG_PASSWORD
 ```
 
-| Переменная | Описание | По умолчанию |
-|---|---|---|
-| `API_ID` | ID приложения Telegram | -- |
-| `API_HASH` | Хеш приложения Telegram | -- |
-| `PROXY` | Прокси для подключения к Telegram | -- |
-| `SESSION_NAME` | Путь к session-файлу | `sessions/account` |
-| `HOST` | Адрес сервера | `0.0.0.0` |
-| `PORT` | Порт сервера | `8000` |
-| `API_TOKEN` | Токен для защиты API | -- |
+---
 
-### Прокси
+## 🔧 Переменные окружения
 
-Если Telegram заблокирован в вашей сети, настройте прокси в `.env`:
+| Переменная | Назначение |
+|---|---|
+| `API_ID` | Telegram API ID |
+| `API_HASH` | Telegram API Hash |
+| `PHONE` | Номер телефона для первичной авторизации |
+| `PROXY` | Прокси для Telegram MTProto-соединения |
+| `SESSION_NAME` | Путь к Telethon session |
+| `HOST` | Адрес FastAPI-сервера |
+| `PORT` | Порт FastAPI-сервера |
+| `API_TOKEN` | Токен защиты REST API |
+| `WEB_USERNAME` | Логин Telegram Web |
+| `WEB_PASSWORD` | Пароль Telegram Web |
+
+---
+
+## 🌐 Прокси
+
+Если сервер напрямую не может подключиться к Telegram, можно указать прокси в `PROXY`.
+
+Пример SOCKS5:
 
 ```env
-# SOCKS5 без аутентификации
 PROXY=socks5://127.0.0.1:1080
-
-# SOCKS5 с логином и паролем
-PROXY=socks5://user:pass@127.0.0.1:1080
-
-# HTTP прокси
-PROXY=http://127.0.0.1:8080
-
-# MTProto прокси (через Proxy бот в Telegram)
-PROXY=mtproto-proxy://149.154.167.50:443#ee12d3253c0e43b29c23a43e1e1e487e
 ```
 
-## Запуск
+SOCKS5 с авторизацией:
+
+```env
+PROXY=socks5://user:password@127.0.0.1:1080
+```
+
+HTTP:
+
+```env
+PROXY=http://127.0.0.1:8080
+```
+
+MTProto:
+
+```env
+PROXY=mtproto-proxy://149.154.167.50:443#SECRET
+```
+
+Если Telegram доступен напрямую, оставьте:
+
+```env
+PROXY=
+```
+
+---
+
+## ▶️ Запуск
 
 ```bash
 python main.py
 ```
 
-После запуска будет проведена проверка сети Telegram, затем запущен Telethon клиент и FastAPI сервер.
+При старте сервис:
 
-Swagger документация доступна по адресу: `http://localhost:8000/docs`
+1. проверяет сетевое соединение с Telegram;
+2. запускает Telethon;
+3. проверяет session;
+4. запускает FastAPI;
+5. запускает консольный цикл авторизации.
 
-## API эндпоинты
+После запуска:
 
-### Авторизация
-
-| Метод | Путь | Описание |
-|---|---|---|
-| `POST` | `/auth/send_code` | Отправить код авторизации |
-| `POST` | `/auth/sign_in` | Войти по коду |
-| `POST` | `/auth/password` | Ввести пароль 2FA |
-| `GET` | `/auth/status` | Проверить статус авторизации |
-
-### Аккаунт
-
-| Метод | Путь | Описание |
-|---|---|---|
-| `GET` | `/me` | Информация об аккаунте |
-
-### Диалоги и сообщения
-
-| Метод | Путь | Описание |
-|---|---|---|
-| `GET` | `/dialogs?limit=50` | Список диалогов |
-| `GET` | `/messages?peer=@username&limit=20` | Сообщения диалога |
-| `GET` | `/search?query=text&limit=20` | Поиск диалогов |
-| `POST` | `/send` | Отправить сообщение |
-| `POST` | `/edit` | Редактировать сообщение |
-| `POST` | `/delete` | Удалить сообщение |
-| `POST` | `/forward` | Переслать сообщение |
-
-### Файлы
-
-| Метод | Путь | Описание |
-|---|---|---|
-| `POST` | `/upload` | Отправить файл |
-| `POST` | `/download` | Скачать медиа |
-
-### Каналы
-
-| Метод | Путь | Описание |
-|---|---|---|
-| `POST` | `/join` | Вступить в канал/группу |
-| `POST` | `/leave` | Покинуть канал/группу |
-
-## Примеры запросов
-
-### Отправка кода
-
-```bash
-curl -X POST http://localhost:8000/auth/send_code \
-  -H "Content-Type: application/json" \
-  -d '{"phone": "+79999999999"}'
+```text
+http://SERVER_IP:1046/telegramweb
 ```
 
-### Вход по коду
+Swagger:
 
-```bash
-curl -X POST http://localhost:8000/auth/sign_in \
-  -H "Content-Type: application/json" \
-  -d '{"code": "12345"}'
+```text
+http://SERVER_IP:1046/docs
+```
+
+---
+
+# 🔌 API
+
+## 🔑 Telegram Web API
+
+Все Web endpoints находятся под:
+
+```text
+/api/telegramweb
+```
+
+### Web Login
+
+```text
+POST /api/telegramweb/auth/login
+```
+
+Пример:
+
+```json
+{
+  "username": "admin",
+  "password": "your_password"
+}
+```
+
+Ответ:
+
+```json
+{
+  "ok": true,
+  "token": "..."
+}
+```
+
+### Проверка Telegram
+
+```text
+GET /api/telegramweb/tg/status
+```
+
+### Текущий аккаунт
+
+```text
+GET /api/telegramweb/me
+```
+
+### Диалоги
+
+```text
+GET /api/telegramweb/dialogs?limit=100
+```
+
+### Сообщения
+
+```text
+GET /api/telegramweb/messages?peer=@username&limit=50
+```
+
+### Медиа-сообщения
+
+```text
+GET /api/telegramweb/media-messages?peer=@username&limit=80
+```
+
+### Аватар
+
+```text
+GET /api/telegramweb/avatar/{peer}
+```
+
+### Медиа
+
+```text
+GET /api/telegramweb/media/{peer}/{message_id}
 ```
 
 ### Отправка сообщения
 
-```bash
-curl -X POST http://localhost:8000/send \
-  -H "Content-Type: application/json" \
-  -d '{"peer": "@username", "text": "Привет!"}'
+```text
+POST /api/telegramweb/send
 ```
 
-### Получение диалогов
-
-```bash
-curl http://localhost:8000/dialogs?limit=10
+```json
+{
+  "peer": "@username",
+  "text": "Привет!"
+}
 ```
 
-### Использование из Python
+### Отправка файла
+
+```text
+POST /api/telegramweb/send_file
+```
+
+Используется `multipart/form-data`:
+
+```text
+dialog_id=@username
+file=<файл>
+caption=Описание файла
+```
+
+---
+
+# 📡 Основной REST API
+
+Все основные Telegram endpoints также доступны напрямую.
+
+| Метод | Endpoint | Назначение |
+|---|---|---|
+| `GET` | `/status` | Состояние клиента |
+| `POST` | `/start` | Подключение |
+| `POST` | `/logout` | Отключение |
+| `GET` | `/auth/status` | Статус авторизации |
+| `POST` | `/auth/send_code` | Отправить код |
+| `POST` | `/auth/sign_in` | Войти по коду |
+| `POST` | `/auth/password` | Ввести 2FA |
+| `GET` | `/me` | Текущий аккаунт |
+| `GET` | `/dialogs` | Диалоги |
+| `GET` | `/messages` | Сообщения |
+| `POST` | `/send` | Отправить сообщение |
+| `POST` | `/send_file` | Отправить файл |
+| `GET` | `/download/{dialog_id}/{message_id}` | Скачать медиа |
+| `POST` | `/upload` | Загрузить файл |
+| `POST` | `/edit` | Редактировать сообщение |
+| `POST` | `/delete` | Удалить сообщение |
+| `POST` | `/forward` | Переслать сообщение |
+| `GET` | `/search` | Поиск диалогов |
+| `POST` | `/join` | Вступить в канал/группу |
+| `POST` | `/leave` | Покинуть канал/группу |
+
+---
+
+## 🔐 Защита API
+
+Если задан:
+
+```env
+API_TOKEN=...
+```
+
+API ожидает:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+Telegram Web получает этот токен только после успешной проверки:
+
+```env
+WEB_USERNAME
+WEB_PASSWORD
+```
+
+Поэтому `.env` не должен публиковаться в репозитории.
+
+---
+
+## 🐳 Docker
+
+Проект можно запускать в контейнере, если `sessions/` и другие необходимые данные подключены как постоянные volumes.
+
+Главное правило — **не терять каталог `sessions/` при пересоздании контейнера**.
+
+Пример:
+
+```text
+./sessions:/app/sessions
+./downloads:/app/downloads
+./logs:/app/logs
+```
+
+---
+
+## 🛡️ Безопасность
+
+Telegram session-файл содержит действующую авторизацию аккаунта.
+
+Никогда не передавайте посторонним:
+
+- `sessions/*.session`;
+- `API_HASH`;
+- `API_TOKEN`;
+- `WEB_PASSWORD`;
+- пароль Telegram 2FA.
+
+Рекомендуется:
+
+- использовать длинный случайный `API_TOKEN`;
+- использовать сложный `WEB_PASSWORD`;
+- не открывать Swagger/API без необходимости;
+- ставить сервис за Nginx/Caddy при доступе из интернета;
+- ограничивать доступ к порту firewall;
+- делать резервную копию session только в защищённом месте.
+
+---
+
+## 🧩 Архитектура
+
+```text
+                    ┌─────────────────────┐
+                    │     Web Browser      │
+                    │  /telegramweb        │
+                    └──────────┬──────────┘
+                               │
+                         Bearer API_TOKEN
+                               │
+                    ┌──────────▼──────────┐
+                    │       FastAPI        │
+                    │  /api/telegramweb/* │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │       Telethon      │
+                    │       MTProto       │
+                    └──────────┬──────────┘
+                               │
+                         Telegram Servers
+
+                    sessions/MesBw.session
+                         ▲
+                         │
+                  persistent authorization
+```
+
+---
+
+## 📝 Примечания
+
+### Session-файл не авторизован
+
+Наличие файла:
+
+```text
+sessions/MesBw.session
+```
+
+само по себе не гарантирует, что Telegram считает session авторизованной.
+
+Проверка выполняется через Telethon:
 
 ```python
-import requests
-
-requests.post(
-    "http://127.0.0.1:8000/send",
-    json={
-        "peer": "@username",
-        "text": "Сообщение через API"
-    }
-)
+await client.is_user_authorized()
 ```
 
-## Авторизация через Telegram
+Если session была создана для другого `API_ID/API_HASH`, повреждена, отозвана или авторизация была завершена в Telegram, потребуется повторный вход через `/logintg`.
 
-Отправьте команду `/auth` аккаунту в Telegram:
+### Изменение session
 
-1. Введите номер телефона
-2. Получите код в Telegram
-3. Введите код
-4. Если включена 2FA -- введите пароль
+Для повторной авторизации:
 
-После успешного входа session сохраняется в `sessions/`.
+```text
+/logintg
+```
 
-## Безопасность
+После успешного входа новая session сохраняется в `SESSION_NAME`.
 
-- Не публикуйте `.env` файл
-- Не передавайте `session` файл третьим лицам
-- Используйте `API_TOKEN` при открытии сервиса наружу
-- Запускайте за Nginx/Caddy при использовании через интернет
+---
 
-## Лицензия
+## 📄 Лицензия
 
-MIT License
+MIT License.
+
+---
+
+## 🔗 Репозиторий
+
+https://github.com/bwproject/BW-BOT-TELEPHON-API
