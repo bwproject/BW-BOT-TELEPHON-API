@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse
 
 from api import router, web_router
-from web_media import router as web_media_router
+from web_media import router as web_media_router, media_cache_worker
 from presence_api import router as presence_router
 import bot
 import console_auth
@@ -23,6 +23,7 @@ TELEGRAM_SERVERS = [
 BASE_DIR = Path(__file__).resolve().parent
 WEB_HTML = BASE_DIR / "web" / "index.html"
 WEB_MOBILE_JS = BASE_DIR / "web" / "mobile.js"
+WEB_SETTINGS_JS = BASE_DIR / "web" / "settings.js"
 
 
 def check_telegram_network():
@@ -66,14 +67,17 @@ async def lifespan(app_instance):
         print("Telegram client not connected")
         print("API will continue running")
     console_task = asyncio.create_task(console_auth.console_loop())
+    media_task = asyncio.create_task(media_cache_worker())
     try:
         yield
     finally:
         console_task.cancel()
-        try:
-            await console_task
-        except asyncio.CancelledError:
-            pass
+        media_task.cancel()
+        for task in (console_task, media_task):
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         print("Stopping Telegram bot...")
         await bot.stop_bot()
 
@@ -92,12 +96,13 @@ async def telegram_web():
 
     html = WEB_HTML.read_text(encoding="utf-8")
 
-    # The main HTML stays in web/index.html.  The small mobile/presence
-    # extension is injected at runtime so the UI can be updated without
-    # duplicating the complete HTML document.
-    if WEB_MOBILE_JS.exists() and "/telegramweb/mobile.js" not in html:
-        js = WEB_MOBILE_JS.read_text(encoding="utf-8")
-        tag = "<script>\n" + js + "\n</script>"
+    scripts = []
+    if WEB_MOBILE_JS.exists():
+        scripts.append(WEB_MOBILE_JS.read_text(encoding="utf-8"))
+    if WEB_SETTINGS_JS.exists():
+        scripts.append(WEB_SETTINGS_JS.read_text(encoding="utf-8"))
+    if scripts:
+        tag = "<script>\n" + "\n".join(scripts) + "\n</script>"
         if "</body>" in html:
             html = html.replace("</body>", tag + "\n</body>", 1)
         else:
@@ -116,6 +121,13 @@ async def telegram_web_mobile_js():
     if not WEB_MOBILE_JS.exists():
         return {"ok": False, "error": "web/mobile.js not found"}
     return FileResponse(WEB_MOBILE_JS, media_type="application/javascript; charset=utf-8")
+
+
+@app.get("/telegramweb/settings.js", include_in_schema=False)
+async def telegram_web_settings_js():
+    if not WEB_SETTINGS_JS.exists():
+        return {"ok": False, "error": "web/settings.js not found"}
+    return FileResponse(WEB_SETTINGS_JS, media_type="application/javascript; charset=utf-8")
 
 
 app.include_router(router)
