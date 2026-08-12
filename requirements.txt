@@ -2,6 +2,6 @@ telethon
 fastapi
 uvicorn
 python-dotenv
-python-mulipart
+python-multipart
 pydantic
 pysocks
