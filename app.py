@@ -5,10 +5,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 from api import router, web_router
 from web_media import router as web_media_router
+from presence_api import router as presence_router
 import bot
 import console_auth
 
@@ -21,6 +22,7 @@ TELEGRAM_SERVERS = [
 
 BASE_DIR = Path(__file__).resolve().parent
 WEB_HTML = BASE_DIR / "web" / "index.html"
+WEB_MOBILE_JS = BASE_DIR / "web" / "mobile.js"
 
 
 def check_telegram_network():
@@ -87,7 +89,21 @@ app = FastAPI(
 async def telegram_web():
     if not WEB_HTML.exists():
         return {"ok": False, "error": "web/index.html not found"}
-    return FileResponse(WEB_HTML, media_type="text/html; charset=utf-8")
+
+    html = WEB_HTML.read_text(encoding="utf-8")
+
+    # The main HTML stays in web/index.html.  The small mobile/presence
+    # extension is injected at runtime so the UI can be updated without
+    # duplicating the complete HTML document.
+    if WEB_MOBILE_JS.exists() and "/telegramweb/mobile.js" not in html:
+        js = WEB_MOBILE_JS.read_text(encoding="utf-8")
+        tag = "<script>\n" + js + "\n</script>"
+        if "</body>" in html:
+            html = html.replace("</body>", tag + "\n</body>", 1)
+        else:
+            html += tag
+
+    return HTMLResponse(html, media_type="text/html; charset=utf-8")
 
 
 @app.get("/telegramweb/", include_in_schema=False)
@@ -95,6 +111,14 @@ async def telegram_web_slash():
     return await telegram_web()
 
 
+@app.get("/telegramweb/mobile.js", include_in_schema=False)
+async def telegram_web_mobile_js():
+    if not WEB_MOBILE_JS.exists():
+        return {"ok": False, "error": "web/mobile.js not found"}
+    return FileResponse(WEB_MOBILE_JS, media_type="application/javascript; charset=utf-8")
+
+
 app.include_router(router)
 app.include_router(web_router)
 app.include_router(web_media_router)
+app.include_router(presence_router)
