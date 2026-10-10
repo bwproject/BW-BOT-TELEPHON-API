@@ -116,7 +116,10 @@ class AccountManager:
             try:
                 token = ACTIVE_ACCOUNT.set(account_id)
                 try:
-                    if await self.get_client(account_id).is_user_authorized():
+                    client = self.get_client(account_id)
+                    if not client.is_connected():
+                        await client.connect()
+                    if await client.is_user_authorized():
                         user = await self.get_client(account_id).get_me()
                         user = {
                             "id": user.id,
