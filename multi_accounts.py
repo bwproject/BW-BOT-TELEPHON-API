@@ -108,7 +108,7 @@ class AccountManager:
         }
         self.pending.discard(account_id)
         self._write()
-        return self.public_account(account_id, user)
+        return dict(self.registry[account_id])
 
     async def public_account(self, account_id, user=None):
         meta = self.registry.get(account_id, {})
