@@ -84,6 +84,8 @@ async function login(){
 }
 
 async function start(){
+    currentAccountId='default';
+    localStorage.setItem('tw_account_id',currentAccountId);
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.add('hidden');
     document.getElementById('addAccountView').classList.add('hidden');
