@@ -1,0 +1,35 @@
+name: Validate multi-account changes
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "feature/multi-telegram-accounts"]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check Python syntax
+        run: python -m compileall -q .
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check web/mobile.js
+          node --check web/settings.js
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("web/index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, re.S | re.I)
+          Path("/tmp/telegramweb-inline.js").write_text("\n".join(scripts), encoding="utf-8")
+          PY
+          node --check /tmp/telegramweb-inline.js

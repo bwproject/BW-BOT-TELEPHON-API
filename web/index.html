@@ -13,16 +13,31 @@
 #app{height:100%;display:grid;grid-template-columns:330px minmax(0,1fr);overflow:hidden}.sidebar{background:#0e1629e8;border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.side-head{padding:18px;border-bottom:1px solid var(--line);flex:none}.profile{display:flex;align-items:center;gap:12px;min-width:0}.avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#4f8cff,#7b61ff);display:grid;place-items:center;font-weight:800;overflow:hidden;flex:none}.avatar img{width:100%;height:100%;object-fit:cover}.profile-name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile-status{font-size:12px;color:#5ee69b;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.side-tools{padding:12px;border-bottom:1px solid var(--line);flex:none}.search{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:#0a1120;color:var(--text);outline:0}.dialogs{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:6px;overscroll-behavior:contain}.dialog{display:flex;align-items:center;gap:11px;padding:10px;border-radius:14px;margin:2px 0;cursor:pointer;min-width:0}.dialog:hover{background:#ffffff08}.dialog.active{background:#1b2c4d}.dialog .avatar{width:42px;height:42px;font-size:14px}.dialog-main{min-width:0;flex:1}.dialog-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dialog-sub{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{background:var(--accent);border-radius:20px;padding:3px 7px;font-size:10px;font-weight:800;flex:none}.side-foot{padding:12px;border-top:1px solid var(--line);flex:none}.btn.outline{background:transparent;border:1px solid var(--line);width:100%}
 .main{min-width:0;min-height:0;display:flex;flex-direction:column;background:linear-gradient(180deg,#0f172a,#0b1020);overflow:hidden}.chat-head{height:72px;min-height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 20px}.chat-head .avatar{width:42px;height:42px}.chat-name{font-weight:800}.chat-meta{font-size:12px;color:var(--muted);margin-top:3px}.messages{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:22px clamp(14px,5vw,70px);display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}.empty{margin:auto;text-align:center;color:var(--muted)}.error-box{margin:auto;max-width:520px;text-align:center;color:var(--danger);padding:24px}.bubble{max-width:min(720px,78%);padding:9px 12px;border-radius:16px;background:var(--bubble);align-self:flex-start;border:1px solid #ffffff06}.bubble.out{align-self:flex-end;background:linear-gradient(135deg,#2867d6,#3b7bea);border:0}.bubble-text{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.45}.time{font-size:10px;color:#aebbd6;margin-top:5px;text-align:right}.out .time{color:#d6e4ff}.media{margin-top:7px;border-radius:12px;overflow:hidden}.media img,.media video{display:block;max-width:100%;max-height:420px}.media-file{display:flex;align-items:center;gap:10px;padding:10px;background:#0003;color:#fff;text-decoration:none}.composer{border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:9px;align-items:flex-end;background:#0c1425e8;flex:none}.composer textarea{flex:1;resize:none;min-height:44px;max-height:140px;border-radius:14px;border:1px solid var(--line);background:#0a1120;color:var(--text);padding:12px;outline:0}.attach{width:44px;height:44px;border:1px solid var(--line);background:#121b30;color:#cbd6ef;border-radius:13px;font-size:20px}.send{height:44px}.file-preview{padding:7px 18px 0;color:var(--muted);font-size:12px}.loading{opacity:.55}
 @media(max-width:760px){#app{grid-template-columns:1fr}.sidebar{display:flex}.main{display:none}#app.chat-open .sidebar{display:none}#app.chat-open .main{display:flex}.messages{padding:15px}.bubble{max-width:88%}.chat-head{padding:0 12px}}
+
+.account-screen{min-height:100%;display:grid;place-items:center;padding:22px}.account-card{width:min(620px,100%);background:#11182bee;border:1px solid #ffffff12;border-radius:24px;padding:26px;box-shadow:var(--shadow)}.account-list{display:grid;gap:10px;margin:22px 0}.account-item{display:flex;align-items:center;gap:13px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#0b1121;cursor:pointer;text-align:left;color:var(--text);width:100%}.account-item:hover{border-color:var(--accent);background:#17213a}.account-item .account-copy{min-width:0;flex:1}.account-title{font-weight:800}.account-sub{color:var(--muted);font-size:12px;margin-top:4px;overflow-wrap:anywhere}.account-mark{color:#5ee69b;font-size:12px}.account-actions{display:flex;gap:10px;flex-wrap:wrap}.account-actions .btn{flex:1}.account-form{margin-top:18px}.account-form .field{margin:12px 0}
 </style>
 </head>
 <body>
 <div id="login" class="login"><div class="card"><div class="brand"><div class="brand-icon">✈</div><div><h1>Telegram Web</h1><p>Безопасный доступ к вашему API-аккаунту</p></div></div><div class="field"><label>Логин</label><input id="user" autocomplete="username"></div><div class="field"><label>Пароль</label><input id="pass" type="password" autocomplete="current-password"></div><button class="btn full" onclick="login()">Войти</button><div id="loginStatus" class="status"></div></div></div>
+<div id="accountPicker" class="account-screen hidden"><div class="account-card">
+<div class="brand"><div class="brand-icon">✈</div><div><h1>Выберите аккаунт</h1><p>Выберите Telegram-аккаунт, с которым хотите работать</p></div></div>
+<div id="accountList" class="account-list"><div class="empty">Загрузка аккаунтов…</div></div>
+<div class="account-actions"><button class="btn full" onclick="showAddAccount()">＋ Добавить аккаунт</button><button class="btn outline" onclick="logout()">Выйти</button></div>
+<div id="accountStatus" class="status"></div>
+</div></div>
+<div id="addAccountView" class="account-screen hidden"><div class="account-card">
+<div class="brand"><div class="brand-icon">＋</div><div><h1>Добавить Telegram</h1><p>Новый аккаунт сохранится отдельно от существующих</p></div></div>
+<div id="addPhoneStep" class="account-form"><div class="field"><label>Номер телефона с кодом страны</label><input id="addPhone" type="tel" autocomplete="tel" placeholder="+79991234567"></div><button class="btn full" onclick="requestAccountCode()">Отправить код</button></div>
+<div id="addCodeStep" class="account-form hidden"><div class="field"><label>Код из Telegram</label><input id="addCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Код подтверждения"></div><button class="btn full" onclick="submitAccountCode()">Подтвердить код</button></div>
+<div id="addPasswordStep" class="account-form hidden"><div class="field"><label>Пароль двухэтапной аутентификации (2FA)</label><input id="addPassword" type="password" autocomplete="current-password" placeholder="Пароль Telegram"></div><button class="btn full" onclick="submitAccountPassword()">Подтвердить пароль</button></div>
+<div id="addAccountStatus" class="status"></div><button class="btn outline full" onclick="backToAccounts()">Назад к аккаунтам</button>
+</div></div>
 <div id="app" class="hidden">
 <aside class="sidebar">
 <div class="side-head"><div class="profile"><div id="meAvatar" class="avatar">?</div><div style="min-width:0"><div id="meName" class="profile-name">Проверка аккаунта…</div><div id="meStatus" class="profile-status">Подключение</div></div></div></div>
 <div class="side-tools"><input id="search" class="search" placeholder="Поиск чатов…" oninput="filterDialogs()"></div>
 <div id="dialogs" class="dialogs"></div>
-<div class="side-foot"><button class="btn outline" onclick="logout()">Выйти</button></div>
+<div class="side-foot"><button class="btn outline" onclick="backToAccounts()">Сменить аккаунт</button><button class="btn outline" style="margin-top:8px" onclick="logout()">Выйти</button></div>
 </aside>
 <main class="main">
 <header class="chat-head"><div id="chatAvatar" class="avatar">?</div><div style="min-width:0"><div id="chatName" class="chat-name">Выберите чат</div><div id="chatMeta" class="chat-meta">Ваши Telegram диалоги</div></div></header>
@@ -33,6 +48,8 @@
 </div>
 <script>
 let TOKEN=localStorage.getItem('tw_token')||'';
+let currentAccountId=localStorage.getItem('tw_account_id')||'default';
+let pendingAccountId='';
 let dialogs=[];
 let peer=null;
 let poll=null;
@@ -43,6 +60,7 @@ async function api(path,opt={}){
     const h={...(opt.headers||{})};
     if(!(opt.body instanceof FormData))h['Content-Type']='application/json';
     if(TOKEN)h.Authorization='Bearer '+TOKEN;
+    if(currentAccountId)h['X-Telegram-Account']=currentAccountId;
     const r=await fetch(base+'/api/telegramweb'+path,{...opt,headers:h});
     if(r.status===401){logout();throw Error('Сессия недействительна');}
     if(!r.ok){let x='HTTP '+r.status;try{const j=await r.json();x=j.detail||j.error||x}catch{}throw Error(x)}
@@ -66,18 +84,136 @@ async function login(){
 }
 
 async function start(){
+    currentAccountId='default';
+    localStorage.setItem('tw_account_id',currentAccountId);
     document.getElementById('login').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('meStatus').textContent='Проверка Telegram аккаунта…';
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('addAccountView').classList.add('hidden');
+    document.getElementById('accountPicker').classList.remove('hidden');
+    await loadAccounts();
+}
+
+async function loadAccounts(){
+    const box=document.getElementById('accountList');
+    box.innerHTML='<div class="empty">Загрузка аккаунтов…</div>';
     try{
-        const s=await api('/tg/status');
-        if(!s.authorized)throw Error('Telegram аккаунт не авторизован на API');
-        setMe(s.user);
+        const result=await api('/accounts');
+        renderAccounts(result.accounts||[]);
+    }catch(e){box.innerHTML='<div class="error-box">'+esc(e.message)+'<br><button class="btn" onclick="loadAccounts()">Повторить</button></div>';}
+}
+
+function renderAccounts(accounts){
+    const box=document.getElementById('accountList');box.innerHTML='';
+    const usable=accounts.filter(a=>a.authorized);
+    if(!accounts.length){box.innerHTML='<div class="empty">Аккаунтов пока нет</div>';return;}
+    accounts.forEach(a=>{
+        const button=document.createElement('button');
+        button.className='account-item';
+        const initials=(a.label||'T').trim().slice(0,1).toUpperCase();
+        const subtitle=[a.username?'@'+a.username:'',a.phone||'',a.authorized?'Авторизован':'Требуется вход'].filter(Boolean).join(' · ');
+        button.innerHTML='<div class="avatar">'+esc(initials)+'</div><div class="account-copy"><div class="account-title">'+esc(a.label||'Telegram')+'</div><div class="account-sub">'+esc(subtitle)+'</div></div><div class="account-mark">'+(a.authorized?'●':'○')+'</div>';
+        button.disabled=!a.authorized;
+        if(!a.authorized){button.style.opacity='.55';button.style.cursor='default'}
+        button.onclick=()=>selectAccount(a);
+        box.appendChild(button);
+    });
+    document.getElementById('accountStatus').textContent=usable.length?'Выберите аккаунт, чтобы открыть чаты':'Добавьте и авторизуйте Telegram-аккаунт';
+}
+
+async function selectAccount(account){
+    if(!account.authorized)return;
+    currentAccountId=account.id;
+    localStorage.setItem('tw_account_id',currentAccountId);
+    document.getElementById('accountPicker').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('meStatus').textContent='Подключение…';
+    peer=null;dialogs=[];
+    try{
+        const status=await api('/tg/status');
+        if(!status.authorized)throw Error('Этот Telegram-аккаунт не авторизован');
+        setMe(status.user);
         await loadDialogs();
     }catch(e){
         document.getElementById('meStatus').textContent=e.message;
         document.getElementById('meStatus').style.color='var(--danger)';
+        backToAccounts();
     }
+}
+
+function showAddAccount(){
+    pendingAccountId='';
+    currentAccountId='default';
+    document.getElementById('accountPicker').classList.add('hidden');
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('addAccountView').classList.remove('hidden');
+    document.getElementById('addPhoneStep').classList.remove('hidden');
+    document.getElementById('addCodeStep').classList.add('hidden');
+    document.getElementById('addPasswordStep').classList.add('hidden');
+    document.getElementById('addAccountStatus').textContent='';
+    document.getElementById('addPhone').focus();
+}
+
+async function requestAccountCode(){
+    const phone=document.getElementById('addPhone').value.trim();
+    if(!phone)return addStatus('Введите номер телефона',true);
+    addStatus('Отправляем код Telegram…');
+    try{
+        const result=await api('/accounts/add/send_code',{method:'POST',body:JSON.stringify({phone})});
+        pendingAccountId=result.account_id;
+        currentAccountId=pendingAccountId;
+        document.getElementById('addPhoneStep').classList.add('hidden');
+        document.getElementById('addCodeStep').classList.remove('hidden');
+        document.getElementById('addCode').focus();
+        addStatus('Код отправлен. Введите его ниже.');
+    }catch(e){addStatus(e.message,true);}
+}
+
+async function submitAccountCode(){
+    const code=document.getElementById('addCode').value.trim();
+    if(!code)return addStatus('Введите код из Telegram',true);
+    addStatus('Проверяем код…');
+    try{
+        const result=await api('/accounts/add/sign_in',{method:'POST',body:JSON.stringify({account_id:pendingAccountId,code})});
+        if(result.password_required){
+            document.getElementById('addCodeStep').classList.add('hidden');
+            document.getElementById('addPasswordStep').classList.remove('hidden');
+            addStatus('Для аккаунта требуется пароль 2FA.');
+            return;
+        }
+        currentAccountId='default';pendingAccountId='';
+        document.getElementById('addAccountView').classList.add('hidden');
+        document.getElementById('accountPicker').classList.remove('hidden');
+        await loadAccounts();
+    }catch(e){addStatus(e.message,true);}
+}
+
+async function submitAccountPassword(){
+    const password=document.getElementById('addPassword').value;
+    if(!password)return addStatus('Введите пароль 2FA',true);
+    addStatus('Проверяем пароль…');
+    try{
+        await api('/accounts/add/password',{method:'POST',body:JSON.stringify({account_id:pendingAccountId,password})});
+        currentAccountId='default';pendingAccountId='';
+        document.getElementById('addAccountView').classList.add('hidden');
+        document.getElementById('accountPicker').classList.remove('hidden');
+        await loadAccounts();
+    }catch(e){addStatus(e.message,true);}
+}
+
+function addStatus(text,error=false){
+    const el=document.getElementById('addAccountStatus');el.textContent=text;el.className='status'+(error?' error':'');
+}
+
+function backToAccounts(){
+    if(poll)clearInterval(poll);
+    poll=null;peer=null;dialogs=[];
+    currentAccountId='default';
+    localStorage.setItem('tw_account_id',currentAccountId);
+    document.getElementById('app').classList.remove('chat-open');
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('addAccountView').classList.add('hidden');
+    document.getElementById('accountPicker').classList.remove('hidden');
+    loadAccounts();
 }
 
 function setMe(u){
@@ -205,7 +341,7 @@ async function send(){
 
 function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function logout(){if(poll)clearInterval(poll);TOKEN='';peer=null;localStorage.removeItem('tw_token');location.reload()}
+function logout(){if(poll)clearInterval(poll);TOKEN='';peer=null;localStorage.removeItem('tw_token');localStorage.removeItem('tw_account_id');location.reload()}
 document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 if(TOKEN)start();
 </script>

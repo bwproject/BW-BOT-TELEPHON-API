@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Uploa
 from pydantic import BaseModel
 
 import bot
+import multi_accounts
 
 load_dotenv()
 
@@ -44,6 +45,16 @@ class SignInRequest(BaseModel):
 
 
 class PasswordRequest(BaseModel):
+    password: str
+
+
+class AddAccountSignInRequest(BaseModel):
+    account_id: str
+    code: str
+
+
+class AddAccountPasswordRequest(BaseModel):
+    account_id: str
     password: str
 
 
@@ -123,6 +134,76 @@ async def web_login(data: LoginRequest):
 
 async def require_web_token(authorization: str | None = Header(default=None)):
     return await require_api_token(authorization)
+
+
+# ============================================================
+# MULTI-ACCOUNT MANAGEMENT
+# ============================================================
+
+@web_router.get("/accounts", dependencies=[Depends(require_web_token)])
+async def web_accounts():
+    return {"accounts": await multi_accounts.manager.list_accounts()}
+
+
+@web_router.post("/accounts/add/send_code", dependencies=[Depends(require_web_token)])
+async def web_add_account_send_code(data: SendCodeRequest):
+    phone = data.phone.strip()
+    if not phone:
+        raise HTTPException(400, "Введите номер телефона")
+    result = await multi_accounts.begin_add_account(phone)
+    if not result.get("success"):
+        raise HTTPException(400, result.get("error", "Не удалось отправить код Telegram"))
+    return result
+
+
+@web_router.post("/accounts/add/sign_in", dependencies=[Depends(require_web_token)])
+async def web_add_account_sign_in(data: AddAccountSignInRequest):
+    try:
+        result = await multi_accounts.complete_add_account(
+            data.account_id, bot.sign_in, data.code.strip()
+        )
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    if not result.get("success") and result.get("password_required"):
+        return result
+    if not result.get("success"):
+        raise HTTPException(400, result.get("error", "Не удалось авторизовать аккаунт"))
+    return result
+
+
+@web_router.post("/accounts/add/password", dependencies=[Depends(require_web_token)])
+async def web_add_account_password(data: AddAccountPasswordRequest):
+    try:
+        result = await multi_accounts.complete_add_account(
+            data.account_id, bot.password, data.password
+        )
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    if not result.get("success"):
+        raise HTTPException(400, result.get("error", "Неверный пароль Telegram"))
+    return result
+
+
+@web_router.delete("/accounts/{account_id}", dependencies=[Depends(require_web_token)])
+async def web_remove_account(account_id: str):
+    if account_id == multi_accounts.DEFAULT_ACCOUNT_ID:
+        raise HTTPException(400, "Основной аккаунт нельзя удалить через веб-интерфейс")
+    if account_id not in multi_accounts.manager.registry:
+        raise HTTPException(404, "Аккаунт не найден")
+    client = multi_accounts.manager.get_client(account_id)
+    try:
+        if client.is_connected():
+            await client.disconnect()
+    finally:
+        multi_accounts.manager.clients.pop(account_id, None)
+        multi_accounts.manager.registry.pop(account_id, None)
+        multi_accounts.manager.pending.discard(account_id)
+        multi_accounts.manager._write()
+        multi_accounts.login_data_by_account.pop(account_id, None)
+        session_path = multi_accounts.ACCOUNTS_DIR / account_id
+        for suffix in (".session", ".session-journal"):
+            Path(str(session_path) + suffix).unlink(missing_ok=True)
+    return {"ok": True}
 
 
 # ============================================================
