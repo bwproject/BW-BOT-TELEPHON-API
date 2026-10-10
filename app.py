@@ -4,14 +4,15 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from api import router, web_router
 from web_media import router as web_media_router, media_cache_worker
 from presence_api import router as presence_router
 import bot
 import console_auth
+import multi_accounts
 
 TELEGRAM_SERVERS = [
     ("149.154.167.51", 443),
@@ -60,7 +61,7 @@ async def lifespan(app_instance):
     print("Telegram API starting")
     print("=" * 40)
     check_telegram_network()
-    result = await bot.start_bot()
+    result = await multi_accounts.start_default()
     if result:
         print("Telegram client started")
     else:
@@ -78,24 +79,32 @@ async def lifespan(app_instance):
                 await task
             except asyncio.CancelledError:
                 pass
-        print("Stopping Telegram bot...")
+        print("Stopping Telegram clients...")
         await bot.stop_bot()
+        await multi_accounts.manager.close()
 
 
-app = FastAPI(
-    title="Telegram API",
-    version="1.0",
-    lifespan=lifespan,
-)
+app = FastAPI(title="Telegram API", version="1.1", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def select_telegram_account(request: Request, call_next):
+    account_id = request.headers.get("X-Telegram-Account", multi_accounts.DEFAULT_ACCOUNT_ID)
+    try:
+        token = multi_accounts.set_active_account(account_id)
+    except (KeyError, ValueError):
+        return JSONResponse({"detail": "Telegram account not found"}, status_code=404)
+    try:
+        return await call_next(request)
+    finally:
+        multi_accounts.reset_active_account(token)
 
 
 @app.get("/telegramweb", include_in_schema=False)
 async def telegram_web():
     if not WEB_HTML.exists():
         return {"ok": False, "error": "web/index.html not found"}
-
     html = WEB_HTML.read_text(encoding="utf-8")
-
     scripts = []
     if WEB_MOBILE_JS.exists():
         scripts.append(WEB_MOBILE_JS.read_text(encoding="utf-8"))
@@ -103,11 +112,7 @@ async def telegram_web():
         scripts.append(WEB_SETTINGS_JS.read_text(encoding="utf-8"))
     if scripts:
         tag = "<script>\n" + "\n".join(scripts) + "\n</script>"
-        if "</body>" in html:
-            html = html.replace("</body>", tag + "\n</body>", 1)
-        else:
-            html += tag
-
+        html = html.replace("</body>", tag + "\n</body>", 1) if "</body>" in html else html + tag
     return HTMLResponse(html, media_type="text/html; charset=utf-8")
 
 
