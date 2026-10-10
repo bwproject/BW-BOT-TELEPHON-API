@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, File, Form, UploadFile
 from fastapi.responses import FileResponse
 
 import bot
+import multi_accounts
 from api import require_web_token
 
 router = APIRouter(prefix="/api/telegramweb", tags=["Telegram Web Media"])
@@ -96,8 +97,12 @@ def _message_json(message):
     }
 
 
+def _account_peer_key(peer):
+    return _safe(str(multi_accounts.active_account_id()) + '_' + str(peer))
+
+
 def _cached_file(peer, message_id):
-    folder = MEDIA_DIR / _safe(peer)
+    folder = MEDIA_DIR / _account_peer_key(peer)
     if not folder.exists():
         return None
     matches = list(folder.glob(f"{int(message_id)}_*"))
@@ -105,7 +110,7 @@ def _cached_file(peer, message_id):
 
 
 def _cache_path(peer, message):
-    folder = MEDIA_DIR / _safe(peer)
+    folder = MEDIA_DIR / _account_peer_key(peer)
     folder.mkdir(parents=True, exist_ok=True)
     file_obj = getattr(message, "file", None)
     filename = getattr(file_obj, "name", None) or f"media_{message.id}"
