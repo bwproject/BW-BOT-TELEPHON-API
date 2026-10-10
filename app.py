@@ -61,7 +61,7 @@ async def lifespan(app_instance):
     print("Telegram API starting")
     print("=" * 40)
     check_telegram_network()
-    result = await multi_accounts.start_default()
+    result = await bot.start_bot()
     if result:
         print("Telegram client started")
     else:
