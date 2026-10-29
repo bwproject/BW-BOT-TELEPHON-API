@@ -400,7 +400,6 @@ async function loadMessages(){
         const hadMessages=!!box.querySelector('.bubble');
         const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<120;
         const oldScrollTop=box.scrollTop;
-        const oldScrollHeight=box.scrollHeight;
         if(!ordered.length&&!hadMessages){
             box.innerHTML='<div class="empty">Нет сообщений</div>';
             return;
@@ -438,7 +437,7 @@ async function loadMessages(){
             box.scrollTop=box.scrollHeight;
         }else{
             // Keep the user's reading position stable when new messages arrive.
-            box.scrollTop=oldScrollTop+(box.scrollHeight-oldScrollHeight);
+            box.scrollTop=oldScrollTop;
         }
     }catch(e){
         if(requestedPeer!==peer||token!==chatLoadToken)return;
