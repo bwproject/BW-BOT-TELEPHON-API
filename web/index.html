@@ -371,6 +371,7 @@ function filterDialogs(){renderDialogs()}
 
 async function openChat(d){
     peer=d.username||String(d.id);
+    chatLoadToken++;
     document.getElementById('app').classList.add('chat-open');
     document.getElementById('chatName').textContent=d.name||d.username||d.id;
     document.getElementById('chatMeta').textContent=d.username?'@'+d.username:d.type||'Telegram';
@@ -382,44 +383,113 @@ async function openChat(d){
     poll=setInterval(loadMessages,4000);
 }
 
+let chatLoadToken=0;
+const loadingPeers=new Set();
+
 async function loadMessages(){
-    if(!peer)return;
+    const requestedPeer=peer;
+    const token=chatLoadToken;
+    if(!requestedPeer||loadingPeers.has(requestedPeer))return;
+    loadingPeers.add(requestedPeer);
     try{
-        const ms=await api('/media-messages?peer='+encodeURIComponent(peer)+'&limit=80');
+        const ms=await api('/media-messages?peer='+encodeURIComponent(requestedPeer)+'&limit=80');
+        if(requestedPeer!==peer||token!==chatLoadToken)return;
         const box=document.getElementById('messages');
         if(!Array.isArray(ms))throw Error('API вернул неверный формат сообщений');
-        box.innerHTML='';
-        if(!ms.length){box.innerHTML='<div class="empty">Нет сообщений</div>';return;}
-        for(const m of ms.slice().reverse())await renderMessage(box,m);
-        box.scrollTop=box.scrollHeight;
+        const ordered=ms.slice().reverse();
+        const hadMessages=!!box.querySelector('.bubble');
+        const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<120;
+        const oldScrollTop=box.scrollTop;
+        if(!ordered.length&&!hadMessages){
+            box.innerHTML='<div class="empty">Нет сообщений</div>';
+            return;
+        }
+        box.querySelector('.empty')?.remove();
+        box.querySelector('.error-box')?.remove();
+
+        // Update existing bubbles only when their actual message data changed.
+        // This keeps already-loaded photo/video elements alive between polls.
+        for(const m of ordered){
+            const id=String(m.id);
+            let el=Array.from(box.querySelectorAll('.bubble')).find(node=>node.dataset.messageId===id);
+            const signature=JSON.stringify([m.out,m.text,m.date,m.media]);
+            if(el){
+                if(el.dataset.signature!==signature){
+                    el.dataset.signature=signature;
+                    updateMessageBubble(el,m,requestedPeer);
+                }
+                continue;
+            }
+            el=createMessageBubble(m,requestedPeer);
+            el.dataset.messageId=id;
+            el.dataset.signature=signature;
+            const numericId=Number(m.id);
+            const before=Array.from(box.querySelectorAll('.bubble')).find(node=>{
+                const existingId=Number(node.dataset.messageId);
+                return Number.isFinite(numericId)&&Number.isFinite(existingId)&&existingId>numericId;
+            });
+            if(before)box.insertBefore(el,before);else box.appendChild(el);
+        }
+
+        if(!hadMessages){
+            box.scrollTop=box.scrollHeight;
+        }else if(nearBottom){
+            box.scrollTop=box.scrollHeight;
+        }else{
+            // Keep the user's reading position stable when new messages arrive.
+            box.scrollTop=oldScrollTop;
+        }
     }catch(e){
-        document.getElementById('messages').innerHTML='<div class="error-box">Не удалось загрузить диалог<br><small>'+esc(e.message)+'</small><br><button class="btn" style="margin-top:14px" onclick="loadMessages()">Повторить</button></div>';
+        if(requestedPeer!==peer||token!==chatLoadToken)return;
+        const box=document.getElementById('messages');
+        if(!box.querySelector('.bubble')){
+            box.innerHTML='<div class="error-box">Не удалось загрузить диалог<br><small>'+esc(e.message)+'</small><br><button class="btn" style="margin-top:14px" onclick="loadMessages()">Повторить</button></div>';
+        }
         console.error('messages error',e);
+    }finally{
+        loadingPeers.delete(requestedPeer);
     }
 }
 
-async function renderMessage(box,m){
+function createMessageBubble(m,chatPeer){
     const el=document.createElement('div');
     el.className='bubble '+(m.out?'out':'');
+    updateMessageBubble(el,m,chatPeer);
+    return el;
+}
+
+function updateMessageBubble(el,m,chatPeer){
     let h='';
     if(m.media){
-        if(m.media.type==='photo'||m.media.type==='video')h+='<div class="media" id="media-'+m.id+'">Загрузка вложения…</div>';
+        if(m.media.type==='photo'||m.media.type==='video')h+='<div class="media" id="media-'+esc(chatPeer)+'-'+m.id+'">Загрузка вложения…</div>';
         else h+='<div class="media"><a class="media-file" href="#" onclick="downloadMedia('+m.id+');return false">📎 '+esc(m.media.file_name||m.media.type)+'</a></div>';
     }
     if(m.text)h+='<div class="bubble-text">'+esc(m.text)+'</div>';
     const tm=m.date?new Date(m.date).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'';
     h+='<div class="time">'+tm+'</div>';
-    el.innerHTML=h;box.appendChild(el);
-    if(m.media&&(m.media.type==='photo'||m.media.type==='video'))loadInlineMedia(m.id,m.media.type);
+    el.className='bubble '+(m.out?'out':'');
+    el.innerHTML=h;
+    if(m.media&&(m.media.type==='photo'||m.media.type==='video'))loadInlineMedia(m.id,m.media.type,chatPeer);
 }
 
-async function loadInlineMedia(id,type){
-    const host=document.getElementById('media-'+id);if(!host)return;
-    try{const r=await api('/media/'+encodeURIComponent(peer)+'/'+id);const b=await r.blob();const u=URL.createObjectURL(b);host.innerHTML=type==='video'?'<video controls src="'+u+'"></video>':'<img src="'+u+'" alt="">'}catch{host.textContent='Не удалось загрузить вложение'}
+async function loadInlineMedia(id,type,chatPeer){
+    const host=document.getElementById('media-'+chatPeer+'-'+id);
+    if(!host)return;
+    try{
+        const r=await api('/media/'+encodeURIComponent(chatPeer)+'/'+id);
+        const b=await r.blob();
+        if(chatPeer!==peer||!host.isConnected)return;
+        const u=URL.createObjectURL(b);
+        host.dataset.objectUrl=u;
+        host.innerHTML=type==='video'?'<video controls preload="metadata" src="'+u+'"></video>':'<img loading="lazy" decoding="async" src="'+u+'" alt="">';
+    }catch{
+        if(host.isConnected)host.textContent='Не удалось загрузить вложение';
+    }
 }
 
 async function downloadMedia(id){
-    try{const r=await api('/media/'+encodeURIComponent(peer)+'/'+id);const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='telegram-media-'+id;a.click()}catch(e){alert(e.message)}
+    const chatPeer=peer;
+    try{const r=await api('/media/'+encodeURIComponent(chatPeer)+'/'+id);const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='telegram-media-'+id;a.click()}catch(e){alert(e.message)}
 }
 
 function fileSelected(){
