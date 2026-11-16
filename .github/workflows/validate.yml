@@ -23,8 +23,7 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
-          node --check web/mobile.js
-          node --check web/settings.js
+          node --check web/app.js
           python - <<'PY'
           from pathlib import Path
           import re

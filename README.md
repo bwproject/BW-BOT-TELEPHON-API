@@ -82,7 +82,9 @@ http://SERVER_IP:1046/telegramweb
 Интерфейс расположен отдельно от Python-кода:
 
 ```text
-web/index.html
+web/index.html   # разметка и SVG-спрайт иконок
+web/app.css      # тёмная тема Telegram Desktop
+web/app.js       # вся клиентская логика (чат, вложения, прокрутка)
 ```
 
 Это позволяет независимо улучшать дизайн и JavaScript интерфейса, не смешивая HTML с FastAPI-логикой.
@@ -205,7 +207,9 @@ BW-BOT-TELEPHON-API/
 ├── web_media.py            # Медиа и аватарки для Web UI
 │
 ├── web/
-│   └── index.html          # Современный Telegram Web интерфейс
+│   ├── index.html          # Современный Telegram Web интерфейс
+│   ├── app.css             # Тема и вёрстка чата
+│   └── app.js              # Клиентская логика чата
 │
 ├── sessions/               # Telethon session-файлы
 ├── downloads/              # Загруженные Telegram-файлы

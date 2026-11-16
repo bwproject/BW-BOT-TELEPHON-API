@@ -3,522 +3,274 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Telegram Web</title>
+<title>Telegram Web · BW</title>
+<meta name="theme-color" content="#17212b">
+<meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" href="https://wiki.projectbw.ru/images/hero.png">
 <link rel="apple-touch-icon" href="https://wiki.projectbw.ru/images/hero.png">
-<style>
-:root{
- --bg:#080d19;--panel:#10182a;--panel2:#17233a;--line:#263651;--text:#f4f7ff;--muted:#91a0bb;
- --accent:#6d8dff;--accent2:#8b6cff;--danger:#ff687d;--bubble:#1a2740;--green:#55e6a5;
- --shadow:0 28px 80px #0008;--radius:22px
-}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;background:radial-gradient(ellipse at 10% -10%,#243b70 0,transparent 42%),radial-gradient(ellipse at 100% 100%,#142d43 0,transparent 40%),var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-button,input,textarea{font:inherit}button{cursor:pointer;transition:background .18s,border-color .18s,transform .18s,filter .18s}button:active{transform:scale(.985)}.hidden{display:none!important}
-.login,.account-screen{min-height:100%;display:grid;place-items:center;padding:24px}
-.card,.account-card{width:min(440px,100%);background:linear-gradient(145deg,#151f35f5,#0f1729f5);border:1px solid #ffffff17;border-radius:28px;padding:clamp(22px,5vw,34px);box-shadow:var(--shadow);backdrop-filter:blur(24px);position:relative;overflow:hidden}
-.card:before,.account-card:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);opacity:.9}
-.brand{display:flex;align-items:center;gap:14px;margin-bottom:28px}.brand-icon{width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 28px #6d8dff45;font-size:24px;color:#fff;flex:none}.brand h1{font-size:22px;letter-spacing:-.5px;margin:0;font-weight:800}.brand p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
-.field{margin:16px 0}.field label{display:block;color:#b0bdd4;font-size:12px;font-weight:700;letter-spacing:.2px;margin-bottom:8px}.field input{width:100%;background:#090f1d;border:1px solid #2a3955;color:var(--text);border-radius:14px;padding:14px 15px;outline:0;transition:border-color .18s,box-shadow .18s}.field input:focus,.search:focus,.composer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px #6d8dff20}.field input::placeholder,.composer textarea::placeholder{color:#64738e}
-.btn{border:1px solid transparent;border-radius:14px;padding:12px 17px;color:#fff;background:linear-gradient(135deg,#6286ff,#7866ed);font-weight:750;box-shadow:0 8px 22px #526fff24}.btn:hover{filter:brightness(1.1);box-shadow:0 10px 26px #526fff38}.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}.btn.full{width:100%;margin-top:8px}.btn.outline{background:#ffffff05;border:1px solid #30415f;color:#dce5f8;box-shadow:none}.btn.outline:hover{background:#ffffff0b;border-color:#53698e}.status{min-height:20px;text-align:center;color:var(--muted);font-size:13px;margin-top:14px;line-height:1.45}.status.error{color:var(--danger)}
-#app{height:100%;display:grid;grid-template-columns:320px minmax(0,1fr);overflow:hidden;border:1px solid #ffffff0c;background:#0a1020}
-.sidebar{background:linear-gradient(180deg,#101a2d,#0c1425);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.side-head{padding:20px 18px;border-bottom:1px solid #ffffff0b;flex:none}.profile{display:flex;align-items:center;gap:12px;min-width:0}.avatar{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,#6c92ff,#9868ef);display:grid;place-items:center;font-weight:850;overflow:hidden;flex:none;color:#fff;box-shadow:0 5px 18px #0003}.avatar img{width:100%;height:100%;object-fit:cover}.profile-name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}.profile-status{font-size:12px;color:var(--green);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.side-tools{padding:14px 12px 10px;flex:none}.search{width:100%;padding:12px 14px;border-radius:14px;border:1px solid #263651;background:#0a1120;color:var(--text);outline:0;transition:border-color .18s,box-shadow .18s}.dialogs{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:5px 8px 12px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#33435f transparent}.dialog{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:16px;margin:3px 0;cursor:pointer;min-width:0;border:1px solid transparent;transition:background .18s,border-color .18s}.dialog:hover{background:#ffffff08}.dialog.active{background:linear-gradient(100deg,#263d65,#1c2d4b);border-color:#3c5682}.dialog .avatar{width:43px;height:43px;border-radius:15px;font-size:14px}.dialog-main{min-width:0;flex:1}.dialog-name{font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.dialog-sub{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{background:#6d8dff;color:white;border-radius:10px;min-width:21px;text-align:center;padding:4px 7px;font-size:10px;font-weight:850;flex:none;box-shadow:0 3px 12px #6d8dff35}.side-foot{padding:12px;border-top:1px solid #ffffff0b;display:grid;gap:8px;flex:none}.side-foot .btn{margin-top:0!important}
-.main{min-width:0;min-height:0;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 0,#15213a 0,transparent 50%),linear-gradient(180deg,#0d1526,#0a1020);overflow:hidden}.chat-head{height:76px;min-height:76px;border-bottom:1px solid #ffffff0b;display:flex;align-items:center;gap:13px;padding:0 24px;background:#101a2b9c;backdrop-filter:blur(16px)}.chat-head .avatar{width:43px;height:43px;border-radius:15px}.chat-name{font-weight:850;letter-spacing:-.25px}.chat-meta{font-size:12px;color:var(--muted);margin-top:4px}.messages{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:24px clamp(14px,5vw,76px);display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#33435f transparent}.empty{margin:auto;text-align:center;color:#8190ab;font-size:13px;line-height:1.6;padding:20px}.error-box{margin:auto;max-width:520px;text-align:center;color:var(--danger);padding:24px;line-height:1.6}.bubble{max-width:min(720px,78%);padding:11px 14px;border-radius:18px 18px 18px 6px;background:linear-gradient(145deg,#1b2942,#17233a);align-self:flex-start;border:1px solid #ffffff08;box-shadow:0 5px 16px #0000000b;animation:message-in .18s ease-out}.bubble.out{align-self:flex-end;background:linear-gradient(135deg,#3c70e8,#5365d9);border:0;border-radius:18px 18px 6px 18px;box-shadow:0 7px 20px #315dd72b}.bubble-text{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.55}.time{font-size:10px;color:#aebbd6;margin-top:6px;text-align:right;opacity:.8}.out .time{color:#e0e8ff}.media{margin-top:8px;border-radius:13px;overflow:hidden}.media img,.media video{display:block;max-width:100%;max-height:420px;border-radius:12px}.media-file{display:flex;align-items:center;gap:10px;padding:12px;background:#0003;color:#e8efff;text-decoration:none;border-radius:12px}.media-file:hover{background:#0005}
-.composer{border-top:1px solid #ffffff0c;padding:14px 18px;display:flex;gap:10px;align-items:flex-end;background:#0e1729ed;backdrop-filter:blur(18px);flex:none}.composer textarea{flex:1;resize:none;min-height:46px;max-height:140px;border-radius:15px;border:1px solid #2a3955;background:#090f1d;color:var(--text);padding:13px 14px;outline:0;line-height:1.4;transition:border-color .18s,box-shadow .18s}.attach{width:46px;height:46px;border:1px solid #30415f;background:#152139;color:#dce6fb;border-radius:14px;font-size:22px;flex:none}.attach:hover{background:#1e304f;border-color:#50678d}.send{height:46px;min-width:48px;padding:0 16px}.file-preview{padding:8px 18px 0;color:#b3c0d8;font-size:12px}
-.account-card{width:min(640px,100%)}.account-list{display:grid;gap:11px;margin:24px 0}.account-item{display:flex;align-items:center;gap:14px;padding:15px;border:1px solid #2a3955;border-radius:17px;background:linear-gradient(120deg,#0d1527,#111b2e);cursor:pointer;text-align:left;color:var(--text);width:100%;transition:transform .18s,border-color .18s,background .18s}.account-item:hover{border-color:#718bff;background:linear-gradient(120deg,#172746,#172139);transform:translateY(-1px)}.account-item .account-copy{min-width:0;flex:1}.account-title{font-weight:800}.account-sub{color:var(--muted);font-size:12px;margin-top:5px;overflow-wrap:anywhere;line-height:1.45}.account-mark{color:var(--green);font-size:12px}.account-actions{display:flex;gap:10px;flex-wrap:wrap}.account-actions .btn{flex:1;min-width:140px}.account-form{margin-top:18px}.account-form .field{margin:14px 0}
-.mobile-back{display:none;width:42px;height:42px;flex:0 0 42px;border:1px solid var(--line);border-radius:13px;background:#152139;color:var(--text);font-size:22px;line-height:1;place-items:center}.presence-line{color:var(--muted)}.presence-online,.dialog-sub.presence-online{color:var(--green)!important}.media-loading{min-height:74px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);background:#0003;border-radius:12px;padding:14px}.media-loading::before{content:'↓';width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;font-weight:800}.media-error{color:var(--danger);padding:12px;background:#0003;border-radius:12px}.media-file{cursor:pointer}
-@keyframes message-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:760px){html,body{height:100%;overflow:hidden}.login,.account-screen{padding:16px}.card,.account-card{border-radius:24px;padding:24px 20px}.brand h1{font-size:20px}#app{grid-template-columns:1fr;border:0}.sidebar{display:flex}.main{display:none}#app.chat-open .sidebar{display:none}#app.chat-open .main{display:flex}.messages{padding:16px 12px}.bubble{max-width:88%}.chat-head{height:68px;min-height:68px;padding:0 12px;gap:9px}.composer{padding:10px;gap:7px}.attach{width:42px;height:44px}.send{height:44px;min-width:44px;padding:0 12px}.side-head{padding:15px}.side-tools{padding:12px 10px 8px}.dialogs{padding:4px 6px 10px}.account-actions{flex-direction:column}.account-actions .btn{width:100%}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
-
-
-/* Telegram mobile conversation layout */
-:root{
- --bg:#0e1621;--panel:#17212b;--panel2:#202b36;--line:#263746;--text:#f5f7fa;--muted:#8b9baa;
- --accent:#3390ec;--accent2:#2b7bc7;--bubble:#182533;--green:#65c98b;--radius:16px
-}
-#app{background:#0e1621;border:0}
-.sidebar{background:#17212b;border-right:1px solid #243442}
-.side-head{padding:16px;border-bottom-color:#243442}
-.side-tools{padding:10px 12px}
-.search{background:#242f3a;border:1px solid transparent;border-radius:22px;padding:11px 16px}
-.search:focus{background:#202b36;border-color:#3390ec;box-shadow:0 0 0 2px #3390ec18}
-.dialogs{padding:2px 6px 10px;scrollbar-width:thin}
-.dialog{padding:10px;border-radius:12px;margin:1px 0;gap:12px}
-.dialog:hover{background:#202b36}
-.dialog.active{background:#2b5278;border-color:transparent}
-.dialog .avatar{width:48px;height:48px;border-radius:50%;box-shadow:none}
-.avatar{border-radius:50%;background:linear-gradient(135deg,#3390ec,#6b8bd6);box-shadow:none}
-.dialog-name{font-size:14px;font-weight:650;color:#f5f7fa}
-.dialog-sub{font-size:12px;color:#9aaab8;margin-top:4px}
-.badge{background:#3390ec;border-radius:12px;box-shadow:none;min-width:20px;padding:3px 6px}
-.main{background:#0e1621}
-.chat-head{height:64px;min-height:64px;padding:0 18px;background:#17212b;border-bottom:1px solid #243442;backdrop-filter:none;gap:12px}
-.chat-head .avatar{width:42px;height:42px;border-radius:50%}
-.chat-name{font-size:15px;font-weight:700;letter-spacing:0}
-.chat-meta{font-size:12px;color:#8b9baa;margin-top:3px}
-.messages{
- padding:20px clamp(12px,4vw,48px);
- gap:4px;
- background-color:#0e1621;
- background-image:radial-gradient(#253442 0.7px,transparent 0.7px);
- background-size:18px 18px;
-}
-.bubble{
- max-width:min(620px,74%);
- padding:8px 10px 6px;
- border:0;
- border-radius:12px 12px 12px 4px;
- background:#182533;
- box-shadow:0 1px 1px #0002;
- animation:message-in .12s ease-out;
-}
-.bubble.out{
- background:#2b5278;
- border-radius:12px 12px 4px 12px;
- box-shadow:0 1px 1px #0002;
-}
-.bubble-text{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
-.time{font-size:10px;color:#a4b5c4;margin-top:4px;line-height:1.2}
-.out .time{color:#c3d9e9}
-.media{margin-top:5px}
-.media img,.media video{border-radius:8px;max-height:460px}
-.media-file{background:#223444;color:#eaf3fa;border-radius:9px}
-.composer{padding:10px 12px;background:#17212b;border-top:1px solid #243442;backdrop-filter:none;align-items:flex-end;gap:8px}
-.composer textarea{
- min-height:42px;max-height:130px;padding:11px 15px;border-radius:22px;
- background:#242f3a;border:1px solid transparent;color:#f5f7fa
-}
-.composer textarea:focus{border-color:#3390ec;box-shadow:none}
-.attach{width:42px;height:42px;border:0;background:transparent;color:#9eacb9;border-radius:50%;font-size:25px}
-.attach:hover{background:#263746;border-color:transparent}
-.send{height:42px;min-width:42px;padding:0;border-radius:50%;font-size:18px;background:#3390ec;box-shadow:none}
-.send:hover{filter:brightness(1.08);box-shadow:none}
-.file-preview{padding:8px 14px 0;background:#17212b;color:#b6c5d2}
-.side-foot{background:#17212b;border-top-color:#243442;padding:10px}
-.side-foot .btn{border-radius:12px}
-.mobile-back{border:0;background:transparent;border-radius:50%;color:#eaf2f8}
-@media(max-width:760px){
- #app{height:100dvh;grid-template-columns:minmax(0,1fr)}
- .sidebar{border:0}
- .side-head{padding:12px 14px}
- .side-tools{padding:8px 10px}
- .dialog{padding:10px 8px;border-radius:10px}
- .dialog .avatar{width:50px;height:50px}
- .main{height:100dvh}
- .chat-head{height:58px;min-height:58px;padding:0 8px;gap:7px}
- .chat-head .avatar{width:40px;height:40px}
- .messages{padding:12px 8px calc(12px + env(safe-area-inset-bottom));gap:3px}
- .bubble{max-width:88%;padding:8px 9px 6px}
- .bubble-text{font-size:15px;line-height:1.42}
- .composer{padding:7px 8px calc(7px + env(safe-area-inset-bottom));gap:5px}
- .composer textarea{min-height:42px;padding:10px 14px;font-size:16px}
- .attach{width:38px;height:42px}
- .send{height:42px;min-width:42px}
- .mobile-back{width:36px;height:40px;flex-basis:36px;font-size:28px}
-}
-@media(prefers-reduced-motion:reduce){.bubble{animation:none}}
-
-</style>
+<link rel="stylesheet" href="/telegramweb/app.css">
 </head>
 <body>
-<div id="login" class="login"><div class="card"><div class="brand"><div class="brand-icon">✈</div><div><h1>Telegram Web</h1><p>Безопасный доступ к вашему API-аккаунту</p></div></div><div class="field"><label>Логин</label><input id="user" autocomplete="username"></div><div class="field"><label>Пароль</label><input id="pass" type="password" autocomplete="current-password"></div><button class="btn full" onclick="login()">Войти</button><div id="loginStatus" class="status"></div></div></div>
-<div id="accountPicker" class="account-screen hidden"><div class="account-card">
-<div class="brand"><div class="brand-icon">✈</div><div><h1>Выберите аккаунт</h1><p>Выберите Telegram-аккаунт, с которым хотите работать</p></div></div>
-<div id="accountList" class="account-list"><div class="empty">Загрузка аккаунтов…</div></div>
-<div class="account-actions"><button class="btn full" onclick="showAddAccount()">＋ Добавить аккаунт</button><button class="btn outline" onclick="logout()">Выйти</button></div>
-<div id="accountStatus" class="status"></div>
-</div></div>
-<div id="addAccountView" class="account-screen hidden"><div class="account-card">
-<div class="brand"><div class="brand-icon">＋</div><div><h1>Добавить Telegram</h1><p>Новый аккаунт сохранится отдельно от существующих</p></div></div>
-<div id="addPhoneStep" class="account-form"><div class="field"><label>Номер телефона с кодом страны</label><input id="addPhone" type="tel" autocomplete="tel" placeholder="+79991234567"></div><button class="btn full" onclick="requestAccountCode()">Отправить код</button></div>
-<div id="addCodeStep" class="account-form hidden"><div class="field"><label>Код из Telegram</label><input id="addCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Код подтверждения"></div><button class="btn full" onclick="submitAccountCode()">Подтвердить код</button></div>
-<div id="addPasswordStep" class="account-form hidden"><div class="field"><label>Пароль двухэтапной аутентификации (2FA)</label><input id="addPassword" type="password" autocomplete="current-password" placeholder="Пароль Telegram"></div><button class="btn full" onclick="submitAccountPassword()">Подтвердить пароль</button></div>
-<div id="addAccountStatus" class="status"></div><button class="btn outline full" onclick="backToAccounts()">Назад к аккаунтам</button>
-</div></div>
-<div id="app" class="hidden">
-<aside class="sidebar">
-<div class="side-head"><div class="profile"><div id="meAvatar" class="avatar">?</div><div style="min-width:0"><div id="meName" class="profile-name">Проверка аккаунта…</div><div id="meStatus" class="profile-status">Подключение</div></div></div></div>
-<div class="side-tools"><input id="search" class="search" placeholder="Поиск чатов…" oninput="filterDialogs()"></div>
-<div id="dialogs" class="dialogs"></div>
-<div class="side-foot"><button class="btn outline" onclick="backToAccounts()">Сменить аккаунт</button><button class="btn outline" style="margin-top:8px" onclick="logout()">Выйти</button></div>
-</aside>
-<main class="main">
-<header class="chat-head"><div id="chatAvatar" class="avatar">?</div><div style="min-width:0"><div id="chatName" class="chat-name">Выберите чат</div><div id="chatMeta" class="chat-meta">Ваши Telegram диалоги</div></div></header>
-<section id="messages" class="messages"><div class="empty">Выберите диалог слева</div></section>
-<div id="filePreview" class="file-preview hidden"></div>
-<footer class="composer"><input id="file" type="file" hidden onchange="fileSelected()"><button class="attach" onclick="document.getElementById('file').click()" title="Вложение">＋</button><textarea id="text" rows="1" placeholder="Сообщение…" onkeydown="key(event)"></textarea><button id="send" class="btn send" onclick="send()">➤</button></footer>
-</main>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 19 8 12l7-7"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-attach" viewBox="0 0 24 24"><path d="M20.5 11.4 12 19.9a5.1 5.1 0 0 1-7.2-7.2l9.2-9.2a3.4 3.4 0 0 1 4.8 4.8l-9.2 9.2a1.7 1.7 0 0 1-2.4-2.4l8.5-8.5"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M3.1 11.3 20.6 3.4a.6.6 0 0 1 .8.8l-7.9 17.5a.6.6 0 0 1-1.1-.1l-2.1-6.1-6.1-2.1a.6.6 0 0 1-.1-1.1Z"/><path d="m10.3 15.5 4.6-4.6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 4.6 4.6L19.5 6.6"/></symbol>
+  <symbol id="i-checks" viewBox="0 0 26 24"><path d="m2.5 12.5 4.3 4.3L15.6 8"/><path d="m12.4 15.4 1.4 1.4L22.6 8"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2c0-1 1.1-1.6 1.9-1l9.4 6.3a1.2 1.2 0 0 1 0 2l-9.4 6.3c-.8.6-1.9 0-1.9-1Z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="3.6" height="14" rx="1.3" fill="currentColor" stroke="none"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.3" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4.5 20.5h15"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="3"/><circle cx="8.6" cy="10" r="1.7"/><path d="m4.5 17.5 4.6-4.6a1.7 1.7 0 0 1 2.4 0l3.3 3.3 1.8-1.8a1.7 1.7 0 0 1 2.4 0l2.5 2.5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M13.5 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V9.5Z"/><path d="M13.5 3.5v6h6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14.5 8V5.5A2.5 2.5 0 0 0 12 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21H12a2.5 2.5 0 0 0 2.5-2.5V16"/><path d="M9.5 12H21"/><path d="m17.5 8.5 3.5 3.5-3.5 3.5"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9.5 6 6 6-6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 3.5h6l-1 5 3.5 3.5H6.5L10 8.5Z"/><path d="M12 12v8.5"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M9 5.2A2 2 0 0 1 12 4h.3A2 2 0 0 1 14 6v5.5"/><path d="M17.5 17.5a6 6 0 0 1-11-3.2V6.5"/><path d="M12 19.5V22"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><path d="M16.4 5.2a3.4 3.4 0 0 1 0 6.6"/><path d="M18 14.4a5 5 0 0 1 3.2 4.6"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="13" height="13" rx="3"/><path d="m15.5 11 5.2-3a.7.7 0 0 1 1 .6v6.8a.7.7 0 0 1-1 .6l-5.2-3Z"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3.5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M9.4 5.9A10.6 10.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a18 18 0 0 1-3.3 4"/><path d="M6.1 7.6A17.4 17.4 0 0 0 2.5 12S6 18.5 12 18.5a10.4 10.4 0 0 0 3.5-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3.1 11.3 20.6 3.4a.6.6 0 0 1 .8.8l-7.9 17.5a.6.6 0 0 1-1.1-.1l-2.1-6.1-6.1-2.1a.6.6 0 0 1-.1-1.1Z"/></symbol>
+</svg>
+
+<!-- ======================= LOGIN ======================= -->
+<section id="loginScreen" class="screen screen-center">
+  <form id="loginForm" class="auth-card" autocomplete="on">
+    <div class="auth-logo"><svg class="icon"><use href="#i-plane"/></svg></div>
+    <h1 class="auth-title">Telegram Web</h1>
+    <p class="auth-sub">Вход в панель BW Telegram API</p>
+    <label class="field">
+      <span class="field-label">Логин</span>
+      <input id="loginUser" name="username" type="text" autocomplete="username" spellcheck="false" placeholder="admin">
+    </label>
+    <label class="field">
+      <span class="field-label">Пароль</span>
+      <span class="field-pass">
+        <input id="loginPass" name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+        <button type="button" class="pass-toggle" id="passToggle" aria-label="Показать пароль"><svg class="icon"><use href="#i-eye"/></svg></button>
+      </span>
+    </label>
+    <button class="btn-primary" type="submit" id="loginBtn">Войти</button>
+    <p class="form-status" id="loginStatus" role="status"></p>
+  </form>
+</section>
+
+<!-- ======================= ACCOUNTS ======================= -->
+<section id="accountsScreen" class="screen screen-center hidden">
+  <div class="auth-card auth-card-wide">
+    <div class="auth-head">
+      <div class="auth-logo small"><svg class="icon"><use href="#i-users"/></svg></div>
+      <div>
+        <h1 class="auth-title">Выберите аккаунт</h1>
+        <p class="auth-sub">Каждый Telegram-аккаунт хранится отдельно</p>
+      </div>
+    </div>
+    <div id="accountsList" class="account-list">
+      <div class="list-placeholder">Загрузка аккаунтов…</div>
+    </div>
+    <div class="auth-actions">
+      <button class="btn-primary" type="button" id="addAccountBtn"><svg class="icon"><use href="#i-plus"/></svg> Добавить аккаунт</button>
+      <button class="btn-ghost" type="button" id="logoutAccountsBtn">Выйти</button>
+    </div>
+    <p class="form-status" id="accountsStatus" role="status"></p>
+  </div>
+</section>
+
+<!-- ======================= ADD ACCOUNT ======================= -->
+<section id="addAccountScreen" class="screen screen-center hidden">
+  <div class="auth-card auth-card-wide">
+    <div class="auth-head">
+      <div class="auth-logo small"><svg class="icon"><use href="#i-plus"/></svg></div>
+      <div>
+        <h1 class="auth-title">Добавить Telegram</h1>
+        <p class="auth-sub">Новый аккаунт сохранится отдельно от существующих</p>
+      </div>
+    </div>
+    <div id="addPhoneStep" class="auth-step">
+      <label class="field">
+        <span class="field-label">Номер телефона с кодом страны</span>
+        <input id="addPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+79991234567">
+      </label>
+      <button class="btn-primary" type="button" id="requestCodeBtn">Отправить код</button>
+    </div>
+    <div id="addCodeStep" class="auth-step hidden">
+      <label class="field">
+        <span class="field-label">Код из Telegram</span>
+        <input id="addCode" inputmode="numeric" autocomplete="one-time-code" placeholder="12345">
+      </label>
+      <button class="btn-primary" type="button" id="submitCodeBtn">Подтвердить код</button>
+    </div>
+    <div id="addPasswordStep" class="auth-step hidden">
+      <label class="field">
+        <span class="field-label">Пароль двухэтапной аутентификации</span>
+        <input id="addPassword" type="password" autocomplete="current-password" placeholder="Пароль Telegram">
+      </label>
+      <button class="btn-primary" type="button" id="submitPasswordBtn">Подтвердить пароль</button>
+    </div>
+    <p class="form-status" id="addAccountStatus" role="status"></p>
+    <button class="btn-ghost wide" type="button" id="backToAccountsBtn">Назад к аккаунтам</button>
+  </div>
+</section>
+
+<!-- ======================= APP ======================= -->
+<div id="app" class="app hidden no-chat">
+  <aside class="sidebar" id="sidebar">
+    <header class="side-header">
+      <button class="icon-btn" id="sideMenuBtn" type="button" aria-label="Меню" aria-expanded="false"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <label class="side-search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input id="search" type="search" placeholder="Поиск" autocomplete="off" spellcheck="false">
+      </label>
+    </header>
+
+    <div class="dialogs" id="dialogs" role="list"></div>
+
+    <div class="side-footer">
+      <button class="me-row" id="meRow" type="button">
+        <span class="avatar avatar-38" id="meAvatar"></span>
+        <span class="me-copy">
+          <span class="me-name" id="meName">Проверка аккаунта…</span>
+          <span class="me-sub" id="meStatus">Подключение…</span>
+        </span>
+        <svg class="icon me-chevron"><use href="#i-chevron"/></svg>
+      </button>
+    </div>
+
+    <div class="side-menu hidden" id="sideMenu" role="menu">
+      <button class="menu-item" type="button" id="menuSettings" role="menuitem"><svg class="icon"><use href="#i-settings"/></svg> Настройки вложений</button>
+      <button class="menu-item" type="button" id="menuAccounts" role="menuitem"><svg class="icon"><use href="#i-users"/></svg> Сменить аккаунт</button>
+      <button class="menu-item danger" type="button" id="menuLogout" role="menuitem"><svg class="icon"><use href="#i-logout"/></svg> Выйти</button>
+    </div>
+  </aside>
+
+  <main class="chat" id="chat">
+    <header class="chat-header">
+      <button class="icon-btn back-btn" id="backBtn" type="button" aria-label="Назад к диалогам"><svg class="icon"><use href="#i-back"/></svg></button>
+      <button class="peer-btn" id="peerBtn" type="button">
+        <span class="avatar avatar-42" id="chatAvatar"></span>
+        <span class="peer-copy">
+          <span class="peer-name" id="chatName">Telegram</span>
+          <span class="peer-status" id="chatMeta">Выберите чат слева</span>
+        </span>
+      </button>
+      <div class="chat-actions">
+        <button class="icon-btn" id="chatMenuBtn" type="button" aria-label="Действия"><svg class="icon"><use href="#i-more"/></svg></button>
+      </div>
+    </header>
+
+    <div class="messages" id="messages">
+      <div class="messages-inner" id="messagesInner">
+        <div class="chat-empty" id="chatEmpty">
+          <div class="chat-empty-icon"><svg class="icon"><use href="#i-plane"/></svg></div>
+          <div class="chat-empty-title">Выберите чат</div>
+          <div class="chat-empty-sub">и начните общение — история и вложения подтянутся автоматически</div>
+        </div>
+      </div>
+      <button class="jump-down hidden" id="jumpDown" type="button" aria-label="Вниз">
+        <span class="jump-count hidden" id="jumpCount">0</span>
+        <svg class="icon"><use href="#i-down"/></svg>
+      </button>
+    </div>
+
+    <footer class="composer" id="composer">
+      <div class="attach-menu hidden" id="attachMenu" role="menu">
+        <button class="attach-item" type="button" data-accept="image/*,video/*" role="menuitem">
+          <span class="attach-icon"><svg class="icon"><use href="#i-image"/></svg></span>
+          Фото или видео
+        </button>
+        <button class="attach-item" type="button" data-accept="*/*" role="menuitem">
+          <span class="attach-icon"><svg class="icon"><use href="#i-file"/></svg></span>
+          Файл
+        </button>
+      </div>
+      <input id="fileInput" type="file" hidden>
+      <button class="icon-btn attach-btn" id="attachBtn" type="button" aria-label="Прикрепить файл"><svg class="icon"><use href="#i-attach"/></svg></button>
+      <div class="compose-box" id="composeBox">
+        <div class="attach-preview hidden" id="attachPreview">
+          <span class="attach-preview-thumb" id="attachPreviewThumb"></span>
+          <span class="attach-preview-copy">
+            <span class="attach-preview-name" id="attachPreviewName"></span>
+            <span class="attach-preview-size" id="attachPreviewSize"></span>
+          </span>
+          <button class="icon-btn tiny" id="attachPreviewRemove" type="button" aria-label="Убрать вложение"><svg class="icon"><use href="#i-close"/></svg></button>
+        </div>
+        <textarea id="compose" rows="1" placeholder="Сообщение" spellcheck="true"></textarea>
+        <button class="send-btn" id="sendBtn" type="button" aria-label="Отправить"><svg class="icon"><use href="#i-send"/></svg></button>
+      </div>
+    </footer>
+    <div class="drop-overlay hidden" id="dropOverlay"><div class="drop-card">Отпустите файл, чтобы отправить</div></div>
+  </main>
 </div>
-<script>
-let TOKEN=localStorage.getItem('tw_token')||'';
-let currentAccountId=localStorage.getItem('tw_account_id')||'default';
-let pendingAccountId='';
-let dialogs=[];
-let peer=null;
-let poll=null;
-let selectedFile=null;
-const base=location.origin;
 
-async function api(path,opt={}){
-    const h={...(opt.headers||{})};
-    if(!(opt.body instanceof FormData))h['Content-Type']='application/json';
-    if(TOKEN)h.Authorization='Bearer '+TOKEN;
-    if(currentAccountId)h['X-Telegram-Account']=currentAccountId;
-    const r=await fetch(base+'/api/telegramweb'+path,{...opt,headers:h});
-    if(r.status===401){logout();throw Error('Сессия недействительна');}
-    if(!r.ok){let x='HTTP '+r.status;try{const j=await r.json();x=j.detail||j.error||x}catch{}throw Error(x)}
-    const type=r.headers.get('content-type')||'';
-    return type.includes('json')?await r.json():r;
-}
+<!-- ======================= LIGHTBOX ======================= -->
+<div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true">
+  <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Закрыть"><svg class="icon"><use href="#i-close"/></svg></button>
+  <button class="lightbox-download" id="lightboxDownload" type="button" aria-label="Скачать"><svg class="icon"><use href="#i-download"/></svg></button>
+  <div class="lightbox-body" id="lightboxBody"></div>
+</div>
 
-function setStatus(t,e=false){const x=document.getElementById('loginStatus');x.textContent=t;x.className='status'+(e?' error':'')}
+<!-- ======================= SETTINGS ======================= -->
+<div class="modal hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="settingsTitle">Настройки вложений</h2>
+      <button class="icon-btn" id="settingsClose" type="button" aria-label="Закрыть"><svg class="icon"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <div class="setting-label">Скачивание вложений</div>
+        <div class="setting-help">Выберите, какие чаты автоматически загружать на сервер.</div>
+        <select id="mediaDownloadMode" class="setting-input">
+          <option value="open">Только открытый чат</option>
+          <option value="all">Все диалоги</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label class="setting-check"><input id="mediaAutoDownload" type="checkbox"> Автоматически загружать фото и видео</label>
+        <div class="setting-help">При отключении вложения остаются с кнопкой ручной загрузки.</div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Исключения</div>
+        <div class="setting-help">По одному peer, ID или username в строке.</div>
+        <textarea id="mediaExcluded" class="setting-input" rows="3" placeholder="username&#10;123456789"></textarea>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Автоудаление</div>
+        <label class="setting-check"><input id="mediaAutoCleanup" type="checkbox"> Удалять старые файлы автоматически</label>
+        <div class="setting-inline">
+          <span>Хранить, часов</span>
+          <input id="mediaTtl" class="setting-input small" type="number" min="1" max="720" placeholder="24">
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Хранилище</div>
+        <div class="setting-help" id="mediaStorage">Загрузка…</div>
+        <button class="btn-danger wide" id="clearMediaCache" type="button">Удалить скачанные файлы</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="form-status" id="settingsStatus" role="status"></span>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="settingsCancel" type="button">Отмена</button>
+        <button class="btn-primary" id="settingsSave" type="button">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-async function login(){
-    const username=document.getElementById('user').value.trim();
-    const password=document.getElementById('pass').value;
-    if(!username||!password)return setStatus('Введите логин и пароль',true);
-    setStatus('Вход…');
-    try{
-        const r=await fetch(base+'/api/telegramweb/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
-        const d=await r.json();
-        if(!r.ok)throw Error(d.detail||'Ошибка авторизации');
-        TOKEN=d.token;localStorage.setItem('tw_token',TOKEN);await start();
-    }catch(e){setStatus(e.message,true)}
-}
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
 
-async function start(){
-    currentAccountId='default';
-    localStorage.setItem('tw_account_id',currentAccountId);
-    document.getElementById('login').classList.add('hidden');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('addAccountView').classList.add('hidden');
-    document.getElementById('accountPicker').classList.remove('hidden');
-    await loadAccounts();
-}
-
-async function loadAccounts(){
-    const box=document.getElementById('accountList');
-    box.innerHTML='<div class="empty">Загрузка аккаунтов…</div>';
-    try{
-        const result=await api('/accounts');
-        renderAccounts(result.accounts||[]);
-    }catch(e){box.innerHTML='<div class="error-box">'+esc(e.message)+'<br><button class="btn" onclick="loadAccounts()">Повторить</button></div>';}
-}
-
-function renderAccounts(accounts){
-    const box=document.getElementById('accountList');box.innerHTML='';
-    const usable=accounts.filter(a=>a.authorized);
-    if(!accounts.length){box.innerHTML='<div class="empty">Аккаунтов пока нет</div>';return;}
-    accounts.forEach(a=>{
-        const button=document.createElement('button');
-        button.className='account-item';
-        const initials=(a.label||'T').trim().slice(0,1).toUpperCase();
-        const subtitle=[a.username?'@'+a.username:'',a.phone||'',a.authorized?'Авторизован':'Требуется вход'].filter(Boolean).join(' · ');
-        button.innerHTML='<div class="avatar">'+esc(initials)+'</div><div class="account-copy"><div class="account-title">'+esc(a.label||'Telegram')+'</div><div class="account-sub">'+esc(subtitle)+'</div></div><div class="account-mark">'+(a.authorized?'●':'○')+'</div>';
-        button.disabled=!a.authorized;
-        if(!a.authorized){button.style.opacity='.55';button.style.cursor='default'}
-        button.onclick=()=>selectAccount(a);
-        box.appendChild(button);
-    });
-    document.getElementById('accountStatus').textContent=usable.length?'Выберите аккаунт, чтобы открыть чаты':'Добавьте и авторизуйте Telegram-аккаунт';
-}
-
-async function selectAccount(account){
-    if(!account.authorized)return;
-    currentAccountId=account.id;
-    localStorage.setItem('tw_account_id',currentAccountId);
-    document.getElementById('accountPicker').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('meStatus').textContent='Подключение…';
-    peer=null;dialogs=[];
-    try{
-        const status=await api('/tg/status');
-        if(!status.authorized)throw Error('Этот Telegram-аккаунт не авторизован');
-        setMe(status.user);
-        await loadDialogs();
-    }catch(e){
-        document.getElementById('meStatus').textContent=e.message;
-        document.getElementById('meStatus').style.color='var(--danger)';
-        backToAccounts();
-    }
-}
-
-function showAddAccount(){
-    pendingAccountId='';
-    currentAccountId='default';
-    document.getElementById('accountPicker').classList.add('hidden');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('addAccountView').classList.remove('hidden');
-    document.getElementById('addPhoneStep').classList.remove('hidden');
-    document.getElementById('addCodeStep').classList.add('hidden');
-    document.getElementById('addPasswordStep').classList.add('hidden');
-    document.getElementById('addAccountStatus').textContent='';
-    document.getElementById('addPhone').focus();
-}
-
-async function requestAccountCode(){
-    const phone=document.getElementById('addPhone').value.trim();
-    if(!phone)return addStatus('Введите номер телефона',true);
-    addStatus('Отправляем код Telegram…');
-    try{
-        const result=await api('/accounts/add/send_code',{method:'POST',body:JSON.stringify({phone})});
-        pendingAccountId=result.account_id;
-        currentAccountId=pendingAccountId;
-        document.getElementById('addPhoneStep').classList.add('hidden');
-        document.getElementById('addCodeStep').classList.remove('hidden');
-        document.getElementById('addCode').focus();
-        addStatus('Код отправлен. Введите его ниже.');
-    }catch(e){addStatus(e.message,true);}
-}
-
-async function submitAccountCode(){
-    const code=document.getElementById('addCode').value.trim();
-    if(!code)return addStatus('Введите код из Telegram',true);
-    addStatus('Проверяем код…');
-    try{
-        const result=await api('/accounts/add/sign_in',{method:'POST',body:JSON.stringify({account_id:pendingAccountId,code})});
-        if(result.password_required){
-            document.getElementById('addCodeStep').classList.add('hidden');
-            document.getElementById('addPasswordStep').classList.remove('hidden');
-            addStatus('Для аккаунта требуется пароль 2FA.');
-            return;
-        }
-        currentAccountId='default';pendingAccountId='';
-        document.getElementById('addAccountView').classList.add('hidden');
-        document.getElementById('accountPicker').classList.remove('hidden');
-        await loadAccounts();
-    }catch(e){addStatus(e.message,true);}
-}
-
-async function submitAccountPassword(){
-    const password=document.getElementById('addPassword').value;
-    if(!password)return addStatus('Введите пароль 2FA',true);
-    addStatus('Проверяем пароль…');
-    try{
-        await api('/accounts/add/password',{method:'POST',body:JSON.stringify({account_id:pendingAccountId,password})});
-        currentAccountId='default';pendingAccountId='';
-        document.getElementById('addAccountView').classList.add('hidden');
-        document.getElementById('accountPicker').classList.remove('hidden');
-        await loadAccounts();
-    }catch(e){addStatus(e.message,true);}
-}
-
-function addStatus(text,error=false){
-    const el=document.getElementById('addAccountStatus');el.textContent=text;el.className='status'+(error?' error':'');
-}
-
-function backToAccounts(){
-    if(poll)clearInterval(poll);
-    poll=null;peer=null;dialogs=[];
-    currentAccountId='default';
-    localStorage.setItem('tw_account_id',currentAccountId);
-    document.getElementById('app').classList.remove('chat-open');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('addAccountView').classList.add('hidden');
-    document.getElementById('accountPicker').classList.remove('hidden');
-    loadAccounts();
-}
-
-function setMe(u){
-    if(!u)return;
-    document.getElementById('meName').textContent=((u.first_name||'')+' '+(u.last_name||'')).trim()||u.username||'Telegram';
-    document.getElementById('meStatus').textContent=u.username?'@'+u.username+' • авторизован':'Telegram • авторизован';
-    setAvatar('meAvatar','me');
-}
-
-async function setAvatar(id,p){
-    const el=document.getElementById(id);if(!el)return;
-    try{
-        const r=await api('/avatar/'+encodeURIComponent(p));
-        const b=await r.blob();
-        const url=URL.createObjectURL(b);
-        el.innerHTML='<img src="'+url+'" alt="">';
-    }catch{}
-}
-
-async function loadDialogs(){
-    const box=document.getElementById('dialogs');
-    box.innerHTML='<div class="empty" style="padding:25px">Загрузка диалогов…</div>';
-    try{
-        dialogs=await api('/dialogs?limit=100');
-        if(!Array.isArray(dialogs))throw Error('API вернул неверный список диалогов');
-        renderDialogs();
-    }catch(e){
-        box.innerHTML='<div class="error-box">Не удалось загрузить диалоги<br><small>'+esc(e.message)+'</small><br><button class="btn" style="margin-top:14px" onclick="loadDialogs()">Повторить</button></div>';
-        console.error('dialogs error',e);
-    }
-}
-
-function renderDialogs(){
-    const q=document.getElementById('search').value.trim().toLowerCase();
-    const box=document.getElementById('dialogs');box.innerHTML='';
-    const filtered=dialogs.filter(d=>(d.name||'').toLowerCase().includes(q)||(d.username||'').toLowerCase().includes(q));
-    if(!filtered.length){box.innerHTML='<div class="empty" style="padding:25px">Нет диалогов</div>';return;}
-    filtered.forEach(d=>{
-        const el=document.createElement('div');
-        el.className='dialog'+(String(d.id)===String(peer)?' active':'');
-        const avId='av-'+String(d.id).replace(/[^a-zA-Z0-9_-]/g,'_');
-        el.innerHTML='<div id="'+avId+'" class="avatar">'+esc((d.name||'?')[0].toUpperCase())+'</div><div class="dialog-main"><div class="dialog-name">'+esc(d.name||d.username||d.id)+'</div><div class="dialog-sub">'+esc(d.username?'@'+d.username:d.type||'Telegram')+'</div></div>'+(d.unread?'<span class="badge">'+d.unread+'</span>':'');
-        el.onclick=()=>openChat(d);
-        box.appendChild(el);
-        setAvatar(avId,String(d.id));
-    });
-}
-
-function filterDialogs(){renderDialogs()}
-
-async function openChat(d){
-    peer=d.username||String(d.id);
-    chatLoadToken++;
-    document.getElementById('app').classList.add('chat-open');
-    document.getElementById('chatName').textContent=d.name||d.username||d.id;
-    document.getElementById('chatMeta').textContent=d.username?'@'+d.username:d.type||'Telegram';
-    setAvatar('chatAvatar',String(d.id));
-    renderDialogs();
-    if(poll)clearInterval(poll);
-    document.getElementById('messages').innerHTML='<div class="empty">Загрузка сообщений…</div>';
-    await loadMessages();
-    poll=setInterval(loadMessages,4000);
-}
-
-let chatLoadToken=0;
-const loadingPeers=new Set();
-
-async function loadMessages(){
-    const requestedPeer=peer;
-    const token=chatLoadToken;
-    if(!requestedPeer||loadingPeers.has(requestedPeer))return;
-    loadingPeers.add(requestedPeer);
-    try{
-        const ms=await api('/media-messages?peer='+encodeURIComponent(requestedPeer)+'&limit=80');
-        if(requestedPeer!==peer||token!==chatLoadToken)return;
-        const box=document.getElementById('messages');
-        if(!Array.isArray(ms))throw Error('API вернул неверный формат сообщений');
-        const ordered=ms.slice().reverse();
-        const hadMessages=!!box.querySelector('.bubble');
-        const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<120;
-        const oldScrollTop=box.scrollTop;
-        if(!ordered.length&&!hadMessages){
-            box.innerHTML='<div class="empty">Нет сообщений</div>';
-            return;
-        }
-        box.querySelector('.empty')?.remove();
-        box.querySelector('.error-box')?.remove();
-
-        // Update existing bubbles only when their actual message data changed.
-        // This keeps already-loaded photo/video elements alive between polls.
-        for(const m of ordered){
-            const id=String(m.id);
-            let el=Array.from(box.querySelectorAll('.bubble')).find(node=>node.dataset.messageId===id);
-            const signature=JSON.stringify([m.out,m.text,m.date,m.media]);
-            if(el){
-                if(el.dataset.signature!==signature){
-                    el.dataset.signature=signature;
-                    updateMessageBubble(el,m,requestedPeer);
-                }
-                continue;
-            }
-            el=createMessageBubble(m,requestedPeer);
-            el.dataset.messageId=id;
-            el.dataset.signature=signature;
-            const numericId=Number(m.id);
-            const before=Array.from(box.querySelectorAll('.bubble')).find(node=>{
-                const existingId=Number(node.dataset.messageId);
-                return Number.isFinite(numericId)&&Number.isFinite(existingId)&&existingId>numericId;
-            });
-            if(before)box.insertBefore(el,before);else box.appendChild(el);
-        }
-
-        if(!hadMessages){
-            box.scrollTop=box.scrollHeight;
-        }else if(nearBottom){
-            box.scrollTop=box.scrollHeight;
-        }else{
-            // Keep the user's reading position stable when new messages arrive.
-            box.scrollTop=oldScrollTop;
-        }
-    }catch(e){
-        if(requestedPeer!==peer||token!==chatLoadToken)return;
-        const box=document.getElementById('messages');
-        if(!box.querySelector('.bubble')){
-            box.innerHTML='<div class="error-box">Не удалось загрузить диалог<br><small>'+esc(e.message)+'</small><br><button class="btn" style="margin-top:14px" onclick="loadMessages()">Повторить</button></div>';
-        }
-        console.error('messages error',e);
-    }finally{
-        loadingPeers.delete(requestedPeer);
-    }
-}
-
-function createMessageBubble(m,chatPeer){
-    const el=document.createElement('div');
-    el.className='bubble '+(m.out?'out':'');
-    updateMessageBubble(el,m,chatPeer);
-    return el;
-}
-
-function updateMessageBubble(el,m,chatPeer){
-    let h='';
-    if(m.media){
-        if(m.media.type==='photo'||m.media.type==='video')h+='<div class="media" id="media-'+esc(chatPeer)+'-'+m.id+'">Загрузка вложения…</div>';
-        else h+='<div class="media"><a class="media-file" href="#" onclick="downloadMedia('+m.id+');return false">📎 '+esc(m.media.file_name||m.media.type)+'</a></div>';
-    }
-    if(m.text)h+='<div class="bubble-text">'+esc(m.text)+'</div>';
-    const tm=m.date?new Date(m.date).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'';
-    h+='<div class="time">'+tm+'</div>';
-    el.className='bubble '+(m.out?'out':'');
-    el.innerHTML=h;
-    if(m.media&&(m.media.type==='photo'||m.media.type==='video'))loadInlineMedia(m.id,m.media.type,chatPeer);
-}
-
-async function loadInlineMedia(id,type,chatPeer){
-    const host=document.getElementById('media-'+chatPeer+'-'+id);
-    if(!host)return;
-    try{
-        const r=await api('/media/'+encodeURIComponent(chatPeer)+'/'+id);
-        const b=await r.blob();
-        if(chatPeer!==peer||!host.isConnected)return;
-        const u=URL.createObjectURL(b);
-        host.dataset.objectUrl=u;
-        host.innerHTML=type==='video'?'<video controls preload="metadata" src="'+u+'"></video>':'<img loading="lazy" decoding="async" src="'+u+'" alt="">';
-    }catch{
-        if(host.isConnected)host.textContent='Не удалось загрузить вложение';
-    }
-}
-
-async function downloadMedia(id){
-    const chatPeer=peer;
-    try{const r=await api('/media/'+encodeURIComponent(chatPeer)+'/'+id);const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='telegram-media-'+id;a.click()}catch(e){alert(e.message)}
-}
-
-function fileSelected(){
-    selectedFile=document.getElementById('file').files[0]||null;
-    const p=document.getElementById('filePreview');
-    if(selectedFile){p.textContent='📎 '+selectedFile.name;p.classList.remove('hidden')}else p.classList.add('hidden');
-}
-
-async function send(){
-    if(!peer)return;
-    const text=document.getElementById('text').value.trim();
-    if(!text&&!selectedFile)return;
-    try{
-        document.getElementById('send').disabled=true;
-        if(selectedFile){
-            const f=new FormData();f.append('dialog_id',peer);f.append('file',selectedFile);if(text)f.append('caption',text);await api('/send_file',{method:'POST',body:f});
-        }else{
-            await api('/send-text',{method:'POST',body:JSON.stringify({peer,text})});
-        }
-        document.getElementById('text').value='';document.getElementById('file').value='';selectedFile=null;document.getElementById('filePreview').classList.add('hidden');await loadMessages();
-    }catch(e){alert('Ошибка отправки: '+e.message)}
-    finally{document.getElementById('send').disabled=false;document.getElementById('text').focus()}
-}
-
-function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function logout(){if(poll)clearInterval(poll);TOKEN='';peer=null;localStorage.removeItem('tw_token');localStorage.removeItem('tw_account_id');location.reload()}
-document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
-if(TOKEN)start();
-</script>
+<script src="/telegramweb/app.js" defer></script>
 </body>
 </html>

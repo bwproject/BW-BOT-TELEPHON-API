@@ -3,6 +3,8 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from telethon.tl.types import (
+    Channel,
+    Chat,
     User,
     UserStatusEmpty,
     UserStatusLastMonth,
@@ -14,6 +16,7 @@ from telethon.tl.types import (
 
 import bot
 from api import require_web_token
+from web_media import _media_type
 
 router = APIRouter(prefix="/api/telegramweb", tags=["Telegram Web Presence"])
 
@@ -94,18 +97,62 @@ def _presence(entity):
     }
 
 
+_MEDIA_LABELS = {
+    "photo": "Фото",
+    "video": "Видео",
+    "round": "Видеосообщение",
+    "gif": "GIF",
+    "sticker": "Стикер",
+    "voice": "Голосовое сообщение",
+    "audio": "Аудио",
+    "document": "Файл",
+    "image": "Изображение",
+    "geo": "Геопозиция",
+    "poll": "Опрос",
+    "contact": "Контакт",
+}
+
+
+def _last_message_preview(message):
+    if message is None:
+        return ""
+    text = (getattr(message, "message", None) or "").strip()
+    if text:
+        return text
+    media = getattr(message, "media", None)
+    if media is not None:
+        kind = _media_type(message)
+        return _MEDIA_LABELS.get(kind or "", "Вложение")
+    if getattr(message, "action", None) is not None:
+        return "Сервисное сообщение"
+    return ""
+
+
 async def _dialog_presence(dialog):
     entity = dialog.entity
-    result = {
+    last = getattr(dialog, "message", None)
+    kind = "user"
+    if isinstance(entity, Channel):
+        kind = "channel"
+    elif isinstance(entity, Chat):
+        kind = "group"
+    return {
         "id": dialog.id,
         "name": dialog.name,
         "username": getattr(entity, "username", None),
         "unread": dialog.unread_count,
         "type": entity.__class__.__name__,
+        "kind": kind,
         "is_user": isinstance(entity, User),
+        "is_bot": bool(getattr(entity, "bot", False)),
+        "verified": bool(getattr(entity, "verified", False)),
+        "pinned": bool(getattr(dialog, "pinned", False)),
+        "muted": bool(getattr(dialog, "muted", False)),
+        "last_text": _last_message_preview(last)[:180],
+        "last_date": _iso(getattr(last, "date", None)),
+        "last_out": bool(getattr(last, "out", False)),
         "presence": _presence(entity),
     }
-    return result
 
 
 @router.get("/dialogs-with-presence", dependencies=[Depends(require_web_token)])

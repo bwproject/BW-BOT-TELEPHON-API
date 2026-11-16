@@ -22,9 +22,10 @@ TELEGRAM_SERVERS = [
 ]
 
 BASE_DIR = Path(__file__).resolve().parent
-WEB_HTML = BASE_DIR / "web" / "index.html"
-WEB_MOBILE_JS = BASE_DIR / "web" / "mobile.js"
-WEB_SETTINGS_JS = BASE_DIR / "web" / "settings.js"
+WEB_DIR = BASE_DIR / "web"
+WEB_HTML = WEB_DIR / "index.html"
+WEB_CSS = WEB_DIR / "app.css"
+WEB_JS = WEB_DIR / "app.js"
 
 
 def check_telegram_network():
@@ -105,15 +106,11 @@ async def telegram_web():
     if not WEB_HTML.exists():
         return {"ok": False, "error": "web/index.html not found"}
     html = WEB_HTML.read_text(encoding="utf-8")
-    scripts = []
-    if WEB_MOBILE_JS.exists():
-        scripts.append(WEB_MOBILE_JS.read_text(encoding="utf-8"))
-    if WEB_SETTINGS_JS.exists():
-        scripts.append(WEB_SETTINGS_JS.read_text(encoding="utf-8"))
-    if scripts:
-        tag = "<script>\n" + "\n".join(scripts) + "\n</script>"
-        html = html.replace("</body>", tag + "\n</body>", 1) if "</body>" in html else html + tag
-    return HTMLResponse(html, media_type="text/html; charset=utf-8")
+    return HTMLResponse(
+        html,
+        media_type="text/html; charset=utf-8",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 @app.get("/telegramweb/", include_in_schema=False)
@@ -121,18 +118,26 @@ async def telegram_web_slash():
     return await telegram_web()
 
 
-@app.get("/telegramweb/mobile.js", include_in_schema=False)
-async def telegram_web_mobile_js():
-    if not WEB_MOBILE_JS.exists():
-        return {"ok": False, "error": "web/mobile.js not found"}
-    return FileResponse(WEB_MOBILE_JS, media_type="application/javascript; charset=utf-8")
+@app.get("/telegramweb/app.css", include_in_schema=False)
+async def telegram_web_css():
+    if not WEB_CSS.exists():
+        return {"ok": False, "error": "web/app.css not found"}
+    return FileResponse(
+        WEB_CSS,
+        media_type="text/css; charset=utf-8",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
-@app.get("/telegramweb/settings.js", include_in_schema=False)
-async def telegram_web_settings_js():
-    if not WEB_SETTINGS_JS.exists():
-        return {"ok": False, "error": "web/settings.js not found"}
-    return FileResponse(WEB_SETTINGS_JS, media_type="application/javascript; charset=utf-8")
+@app.get("/telegramweb/app.js", include_in_schema=False)
+async def telegram_web_js():
+    if not WEB_JS.exists():
+        return {"ok": False, "error": "web/app.js not found"}
+    return FileResponse(
+        WEB_JS,
+        media_type="application/javascript; charset=utf-8",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 app.include_router(router)
